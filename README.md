@@ -33,9 +33,9 @@ Once it's installed, it opens full screen with its own icon and works without an
 | `sync.js` | Optional sync across devices (shared by all the Big apps) |
 | `manifest.webmanifest` | The app's name, colors and icons, used when it's installed |
 | `sw.js` | Saves a copy of the app so it opens offline |
-| `icons/` | The app icon at each size browsers and phones ask for |
+| `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | The app icon at each size browsers and phones ask for |
 
-**When you update the app:** change `VERSION` at the top of `sw.js` (for example from `v4` to `v5`). That tells installed copies to pick up the new files.
+**When you update the app:** change `VERSION` at the top of `sw.js` (for example from `v6` to `v7`). That tells installed copies to pick up the new files.
 
 ## Your data
 
