@@ -2,11 +2,12 @@
 // Your log is NOT stored here; it lives in the browser's localStorage. This file only keeps
 // a copy of the app itself so it opens without a connection.
 // When you change any file below, bump VERSION so phones pick up the new copy.
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = 'calorie-tracker-' + VERSION;
 const APP_FILES = [
   './',
   './index.html',
+  './sync.js',
   './manifest.webmanifest',
   './icons/icon.svg',
   './icons/icon-192.png',
@@ -42,10 +43,12 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Icons, manifest and Google Fonts: use the saved copy, fetch and save it the first time
+  // Icons, manifest, Google Fonts and the sync library (its URL includes its version, so a saved copy never goes stale):
+  // use the saved copy, fetch and save it the first time. Sync traffic itself (googleapis.com) is never touched.
   const sameOrigin = url.origin === self.location.origin;
   const isFont = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
-  if (sameOrigin || isFont) {
+  const isSdk = url.hostname === 'www.gstatic.com' && url.pathname.startsWith('/firebasejs/');
+  if (sameOrigin || isFont || isSdk) {
     e.respondWith(
       caches.match(req).then(hit => hit || fetch(req).then(res => {
         if (res.ok || res.type === 'opaque') { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }

@@ -62,7 +62,7 @@ button{cursor:pointer;border:0;font:inherit}
 .btn.wide{width:100%}
 .lnk{background:none;color:var(--mu);padding:8px;font-weight:600}
 .danger{background:none;color:var(--over);font-weight:700;padding:10px 4px}
-input[type=text],input[type=number],select,textarea{width:100%;min-width:0;padding:10px 12px;border:1px solid transparent;border-radius:12px;background:var(--fld);color:var(--tx);font:inherit;transition:border-color .15s,background .15s}
+input[type=text],input[type=email],input[type=password],input[type=number],select,textarea{width:100%;min-width:0;padding:10px 12px;border:1px solid transparent;border-radius:12px;background:var(--fld);color:var(--tx);font:inherit;transition:border-color .15s,background .15s}
 input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 input:focus,select:focus,textarea:focus{outline:none;border-color:color-mix(in srgb,var(--tang) 60%,transparent);background:var(--card);box-shadow:0 0 0 3px color-mix(in srgb,var(--tang) 18%,transparent)}
 input.a{width:86px;flex:none;text-align:right}
@@ -322,6 +322,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 <div id="sheet" class="sheet"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
+<script src="sync.js"></script>
 <script>
 // =====================================================================
 // 1. CONSTANTS
@@ -382,7 +383,7 @@ function migrate(){for(let v=S.v||0;v<MIGRATIONS.length;v++)MIGRATIONS[v](S);S.v
 function load(){try{S=JSON.parse(localStorage.getItem(LS))}catch(e){S=null}if(!S||typeof S!='object')S=seed();migrate()}
 let SVT=0,SVFAIL=0;
 // Saving can fail (storage full, private browsing, blocked site data). Say so once instead of failing silently.
-function flush(){clearTimeout(SVT);SVT=0;RECC=null;try{localStorage.setItem(LS,JSON.stringify(S));SVFAIL=0}catch(e){if(!SVFAIL){SVFAIL=1;setTimeout(()=>toast('Couldn’t save on this device. Copy a backup in Settings.'),0)}}}
+function flush(){clearTimeout(SVT);SVT=0;RECC=null;try{const t=JSON.stringify(S);localStorage.setItem(LS,t);SVFAIL=0;window.CloudSync&&CloudSync.saved(t)}catch(e){if(!SVFAIL){SVFAIL=1;setTimeout(()=>toast('Couldn’t save on this device. Copy a backup in Settings.'),0)}}}
 const save=()=>{RECC=null;syncRecipes();clearTimeout(SVT);SVT=setTimeout(flush,300)};
 // Commit a field that's mid-edit (its change event hasn't fired yet) before the page is hidden
 function commitActive(){const a=document.activeElement,d=a&&a.dataset;if(d&&d.p&&d.t)setPath(d.p,a.value,d.t);else if(d&&(d.a=='iCal'||d.a=='iQs'))ACT[d.a](d,a)}
@@ -629,6 +630,7 @@ let OBSNAP=null;
 
 // ---- Settings ----
 function vMore(){return `<h2 class="ph">Settings</h2><section class="card"><div class="sec">Appearance</div><div class="seg">${[['system','Auto'],['light','Light'],['dark','Dark']].map(([v,l])=>`<button class="${S.set.theme==v?'on':''}" data-a="theme" data-v="${v}">${l}</button>`).join('')}</div></section>
+ ${window.CloudSync?CloudSync.view():''}
  <section class="card"><div class="sec">Backup &amp; restore</div><p class="mu" style="margin:0">Your log is saved in this browser only. Copy a backup and keep it somewhere safe, like Notes, or use it to move to another device.</p>
  <p class="mu" style="margin:8px 0 0;font-weight:700">${S.set.lastBk?'Last backup: '+longDate(iso(new Date(S.set.lastBk))):'No backup yet.'}</p>
  ${SVFAIL?'<p class="note" style="color:var(--over)">Changes aren’t being saved on this device right now. Copy a backup so you don’t lose them.</p>':''}
@@ -911,6 +913,10 @@ const rmPeek=()=>{const p=$('#peek');if(p)p.remove()};
 load();
 if(!S.set.onboarded)OB=0;   // first run: setup questionnaire
 R();
+// Sync across devices (sync.js). apply() takes a copy from the cloud through the same checks as a restored backup.
+window.CloudSync&&CloudSync.init({app:'diet',name:'Big Skinny',key:LS,what:'your log',version:()=>MIGRATIONS.length,btn:'btn',btn2:'btn sec2',
+ card:b=>`<section class="card"><div class="sec">Sync across devices</div>${b}</section>`,
+ apply:obj=>{S=parseBk(JSON.stringify(obj));migrate();RECC=null;flush();if(D>tdy())D=tdy();OB=S.set.onboarded?-1:0;R()},render:()=>R()});
 addEventListener('resize',()=>{fitNames();if(OB<0)placeHL(T)});
 document.fonts&&document.fonts.ready.then(()=>{fitNames();if(OB<0)placeHL(T)});
 // Web app: lets it install to the home screen and open offline (needs https, so not when opened as a local file)
