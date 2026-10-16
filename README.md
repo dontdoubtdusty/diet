@@ -1,6 +1,6 @@
-# Big Juicy Calorie Tracker
+# Big Skinny Health
 
-A simple calorie tracker that runs entirely in your browser. It's one file (`index.html`) with no build step, no server and no account.
+A simple calorie tracker that runs in your browser. It's part of the Big apps, alongside [Big Saucy Recipes](https://github.com/dontdoubtdusty/cooking) and [Big Minty Finances](https://github.com/dontdoubtdusty/budget). It's one file (`index.html`) with no build step and no server.
 
 ## Features
 
@@ -9,8 +9,9 @@ A simple calorie tracker that runs entirely in your browser. It's one file (`ind
 - Logging exercise, with calories burned estimated from duration and intensity
 - Saved foods and recipes, so you can log something with one tap
 - A 7-day chart showing how each day compared with your target
-- Light and dark themes
-- Backup and restore through a file or copied text
+- Light, dark and automatic themes
+- Backups you can share, download and import, with a weekly reminder
+- Optional sync across devices with an email sign-in
 
 ## Using it
 
@@ -29,17 +30,21 @@ Once it's installed, it opens full screen with its own icon and works without an
 | File | What it does |
 | --- | --- |
 | `index.html` | The whole app |
+| `sync.js` | Optional sync across devices (shared by all the Big apps) |
 | `manifest.webmanifest` | The app's name, colors and icons, used when it's installed |
 | `sw.js` | Saves a copy of the app so it opens offline |
 | `icons/` | The app icon at each size browsers and phones ask for |
 
-**When you update the app:** change `VERSION` at the top of `sw.js` (for example from `v1` to `v2`). That tells installed copies to pick up the new files.
+**When you update the app:** change `VERSION` at the top of `sw.js` (for example from `v4` to `v5`). That tells installed copies to pick up the new files.
 
 ## Your data
 
-Everything you log is saved in your browser's `localStorage` on your device. Nothing is sent anywhere, and none of it is stored in this repository.
+Everything you log is saved in your browser's `localStorage` on your device, and none of it is stored in this repository.
 
-Each website address keeps its own separate storage, so your log doesn't follow you to a new address or device by itself. On iPhone, the home-screen app also keeps separate storage from the same page opened in Safari. To move it, go to **Settings → Copy backup** (or **Save backup file**) in the old place, then **Import backup file** or **Paste backup text** in the new one.
+Each website address keeps its own separate storage, so your log doesn't follow you to a new address or device by itself. On iPhone, the home-screen app also keeps separate storage from the same page opened in Safari. Two ways to move it:
+
+- **Backup:** go to **Settings → Share backup** (or **Download backup**) in the old place, then **Import backup file** in the new one.
+- **Sync:** sign in under **Settings → Sync across devices** on each device. Your log is then also kept in the Big apps' Firebase database under your account. Sync is off until you sign in.
 
 ## Credits
 
