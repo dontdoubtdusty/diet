@@ -202,6 +202,7 @@ textarea.nm{flex:1 1 auto;height:auto;min-height:0;margin:0;resize:none;overflow
 .rbtn .fn{flex:1;min-width:0;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
 .rbtn .fc{font-weight:800;white-space:nowrap}
 .rbtn .chev{flex:none;display:grid;color:var(--mu)}
+.bkb{padding:6px 8px;font-weight:700}   /* ‹ back links: same look in all three apps */
 .reh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px}
 .rtot{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .rtot b{font:600 40px/1.05 var(--fd);background:linear-gradient(90deg,var(--pc),var(--pc2));-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -545,7 +546,7 @@ function vFoods(){if(RE)return vRecipe();if(FE)return vFood();
 // Brand and serving size are reminders only; calories are always per serving
 let FE=null,FERR='',UE=0;
 function vFood(){const units=S.set.units||[],cur=(FE.u||'').trim(),opts=['',...units];if(cur&&!units.includes(cur))opts.push(cur);
- return `<div class="reh"><button class="lnk" data-a="feCancel" style="padding-left:0">\u2039 My foods</button><span class="mu" style="font-weight:700">${FE.id?'Edit food':'New food'}</span></div>
+ return `<div class="reh"><button class="lnk bkb" data-a="feCancel">\u2039 My foods</button><span class="mu" style="font-weight:700">${FE.id?'Edit food':'New food'}</span></div>
  <section class="card form">
  <label class="fl"><span class="sec">Name</span><input id="fen" type="text" placeholder="Like Peanut butter" autocomplete="off" value="${esc(FE.n)}"></label>
  <label class="fl"><span class="sec">Brand <i>(optional)</i></span><input id="feb" type="text" placeholder="Like Jif" autocomplete="off" value="${esc(FE.br)}"></label>
@@ -565,7 +566,7 @@ function reMatches(){const q=RQ.trim().toLowerCase();return S.foods.filter(f=>!i
 function reList(){const m=reMatches();return m.length?m.map(f=>`<div class="fi"><button class="fb" data-a="reAdd" data-id="${esc(f.id)}"><span class="fn">${esc(f.n)}${subLine(f)}</span><span class="fc">${fmt(f.cal)} cal</span><span class="pl" aria-hidden="true">+</span></button></div>`).join('')
  :`<p class="mu" style="margin:8px 2px 0">${RQ.trim()?'No saved foods match. Add it as a one-off below.':'Save some foods first, or add one-offs below.'}</p>`}
 function vRecipe(){const ps=RE.parts,tot=sum(ps,p=>liveCal(p)*num(p.q));
- return `<div class="reh"><button class="lnk" data-a="reCancel" style="padding-left:0">‹ My foods</button><span class="mu" style="font-weight:700">${RE.id?'Edit recipe':'New recipe'}</span></div>
+ return `<div class="reh"><button class="lnk bkb" data-a="reCancel">‹ My foods</button><span class="mu" style="font-weight:700">${RE.id?'Edit recipe':'New recipe'}</span></div>
  <section class="card form"><input id="ren" type="text" placeholder="Recipe name, like PB sandwich" autocomplete="off" value="${esc(RE.n)}" aria-label="Recipe name"><div class="rtot"><b>${fmt(tot)}</b><span class="mu" style="font-weight:700">calories in all</span></div></section>
  <section class="card" style="--mc:var(--grape)"><div class="sec">Ingredients</div>${ps.length?ps.map((p,i)=>{const c=liveCal(p),nm=liveName(p),one=!foodById(p.fid);return `<div class="prow"><div class="ptop"><b class="pn">${esc(nm)}${(()=>{const s=foodById(p.fid);return s?subLine(s):''})()}</b><button class="x" data-a="reRm" data-i="${i}" aria-label="Remove ${esc(nm)}">${ICX}</button></div><div class="psub"><span class="mu">${fmt(c)} cal a serving${one?' · one-off':''}</span><div class="step"><button data-a="reQ" data-i="${i}" data-n="-0.25" aria-label="Fewer servings of ${esc(nm)}">−</button><b>${qf(p.q)}</b><button data-a="reQ" data-i="${i}" data-n="0.25" aria-label="More servings of ${esc(nm)}">+</button></div><b class="pc">${fmt(c*num(p.q))}</b></div></div>`}).join('')
   :'<p class="mu" style="margin:0">No ingredients yet. Add some below.</p>'}</section>
@@ -618,7 +619,7 @@ function vOnboard(){const st=obSteps();if(OB>=st.length)OB=st.length-1;const k=s
  else if(k=='pace')b=q('How fast do you want to lose it?',`${qs(Math.round((num(p.lbs)-num(p.goal))*10)/10)} lb to go.`)+paceOpts(p.pace,'obPick');
  else{const t=target();b=t?`<section class="hero obres"><span>Your daily target</span><b>${fmt(t.t)}</b><span>calories a day${t.phase=='lose'?` \u00b7 losing ${qs(Math.round(t.rate*10)/10)} lb a week`:' \u00b7 maintaining'}</span></section><section class="card">${resLines(t)}</section><button class="btn wide" data-a="obDone">Start tracking</button><p class="mu" style="margin:0;text-align:center">You can change any of this later on the Goal tab.</p>`
   :q('Something\u2019s missing','Go back and check your answers.');}
- return `<div class="ob"><div class="obtop">${OB>0?'<button class="lnk" data-a="obBack">\u2039 Back</button>':'<span></span>'}<span class="mu">${k=='done'?'All set':`Question ${OB+1} of ${n}`}</span>${S.set.onboarded?'<button class="lnk" data-a="obCancel">Cancel</button>':'<span></span>'}</div><div class="obbar"><i style="width:${(OB/n*100).toFixed(1)}%"></i></div>${b}</div>`}
+ return `<div class="ob"><div class="obtop">${OB>0?'<button class="lnk bkb" data-a="obBack">\u2039 Back</button>':'<span></span>'}<span class="mu">${k=='done'?'All set':`Question ${OB+1} of ${n}`}</span>${S.set.onboarded?'<button class="lnk" data-a="obCancel">Cancel</button>':'<span></span>'}</div><div class="obbar"><i style="width:${(OB/n*100).toFixed(1)}%"></i></div>${b}</div>`}
 const OBCHK={age:[['oa','age']],height:[['oft','ft'],['oin','inch']],weight:[['olb','lbs']],goal:[['og','goal']]};
 // Check every box on the screen first, then store them together
 function obNext(){const k=obSteps()[OB],vals=[];
@@ -668,7 +669,8 @@ function vAdd(){const m=mealOf(SM),isX=SM=='x',kseg=`<div class="seg kseg">${[['
  <button class="btn wide" data-a="addF">Add to ${m.n}</button><div class="sflash${SFE?' err':''}" aria-live="polite">${esc(SFL)}</div></section>
  <section class="card" style="--mc:${m.c}"><div id="sl">${sheetList()}</div></section>`}
 // Open the Add tab, set to a meal (or exercise); the + button with no meal picks one by the time of day
-function openAdd(k){SM=k||defMeal();LM=SM=='x'?defMeal():SM;XN=XH='';XL=1;FN=FC='';Q=1;SFL='';SFE=0;if(T=='add'){R();scrollTo({top:0,behavior:'smooth'})}else goTab('add')}
+let XSUB=0;   // Exercise was picked from Food on the Add tab, so Back returns to Food
+function openAdd(k){XSUB=0;SM=k||defMeal();LM=SM=='x'?defMeal():SM;XN=XH='';XL=1;FN=FC='';Q=1;SFL='';SFE=0;if(T=='add'){R();scrollTo({top:0,behavior:'smooth'})}else goTab('add')}
 // The DOM diff never overwrites the focused field, so clear the entry boxes directly
 function clearEntry(){FN='';FC='';Q=1;['#fn','#fc'].forEach(s=>{const e=$(s);if(e)e.value=''});const fq=$('#fq');if(fq)fq.value='1';const s=$('#fsave');if(s)s.checked=false}
 function sheetLog(n,cal,meta){const q=Q,name=q==1?n:`${n} (${qf(q)} servings)`,total=num(cal)*q,d=D,k=SM,it=logItem(d,k,n,total,1,Object.assign({},meta,{q,per:num(cal)}));
@@ -758,7 +760,7 @@ const ACT={
   RE=null;RERR='';save();R();scrollTo(0,0);toast(`Saved ${n} \u00b7 ${fmt(tot)} cal${ch?` \u00b7 updated ${ch} logged`:''}`)},
  reDel:()=>{const i=S.foods.findIndex(x=>x.id==RE.id);RE=null;RERR='';if(i<0){R();return}const [x]=S.foods.splice(i,1);save();R();scrollTo(0,0);toast(`Deleted “${x.n}”`,()=>{S.foods.splice(i,0,x);save();R()},'del')},
  reCancel:()=>{RE=null;RERR='';R();scrollTo(0,0)},
- kind:d=>{if(d.v=='x'){if(SM!='x')LM=SM;SM='x'}else SM=LM||defMeal();SFL='';SFE=0;R()},
+ kind:d=>{if(d.v=='x'){if(SM!='x'){LM=SM;XSUB=1}SM='x'}else{SM=LM||defMeal();XSUB=0}SFL='';SFE=0;R()},
  xq:d=>{XN=XN==d.v?'':d.v;R()},
  xl:d=>{XL=+d.v;R()},
  addX:()=>{const h=parseFloat(XH);if(!(h>0&&h<=24)){SFL='Enter how many hours, like 0.5 or 1.25.';SFE=1;R();$('#xh')?.focus();return}
@@ -812,15 +814,38 @@ let RK='';
 function R(){applyTheme();if(D>tdy())D=tdy();
  const c=tabCols(OB>=0?'today':T);ROOT.style.setProperty('--pc',c[0]);ROOT.style.setProperty('--pc2',c[1]);
  document.body.classList.toggle('obm',OB>=0);
- if(OB>=0){const key='ob'+OB,full=key!==RK;RK=key;patch($('#app'),vOnboard(),full);if(full)setTimeout(()=>$('.obin input')?.focus(),60);return}
+ if(OB>=0){const key='ob'+OB,full=key!==RK;RK=key;patch($('#app'),vOnboard(),full);if(full)setTimeout(()=>$('.obin input')?.focus(),60);navSync();return}
  const key=T+(T=='foods'&&RE?':re':T=='foods'&&FE?':fe':''),full=key!==RK;RK=key;patch($('#app'),(T=='more'?vMore:TABS.find(t=>t[0]==T)[2])(),full);
  $('#gear').classList.toggle('on',T=='more');
  const qi=TABS.findIndex(t=>t[0]=='add'),nb=t=>t[0]=='add'?`<button class="qab ${T=='add'?'on':''}"${T=='add'?' aria-current="page"':''} data-a="open" data-id="add" aria-label="Add food or exercise"><b>+</b><span>Add</span></button>`:`<button class="tb ${T==t[0]?'on':''}"${T==t[0]?' aria-current="page"':''} style="--tc:${tabCols(t[0])[0]}" data-a="tab" data-id="${t[0]}"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[t[0]]}</svg><span>${t[1]}</span></button>`;
  patch($('#nav'),`<i class="hl" aria-hidden="true"></i><div class="nh">${TABS.slice(0,qi).map(nb).join('')}</div>${nb(TABS[qi])}<div class="nh">${TABS.slice(qi+1).map(nb).join('')}</div>`);
- placeHL(T);fitNames()}
+ placeHL(T);fitNames();navSync()}
 const APP=()=>$('#app');
 function slideIn(dir){const m=APP();m.style.transition='none';m.style.transform=`translate3d(${dir*Math.min(70,innerWidth*.15)}px,0,0)`;m.style.opacity='0';void m.offsetWidth;
  m.style.transition='transform .22s cubic-bezier(.16,1,.3,1),opacity .16s ease-out';m.style.transform='';m.style.opacity='';setTimeout(()=>{m.style.transition=''},240)}
+// Levels below Today: any other tab (or Settings) 1; a food or recipe editor and Add > Exercise add one;
+// the setup questions sit on top: one level per question answered, plus one when it was reopened from Goal (Cancel)
+function navDepth(){if(OB>=0)return (OBSNAP?1:0)+OB+(T=='today'?0:1);
+ return (T=='today'?0:1)+(T=='foods'&&(RE||FE)?1:0)+(T=='add'&&SM=='x'&&XSUB?1:0)}
+function navUp(){if(OB>0)return ACT.obBack();
+ if(OB==0){if(OBSNAP)ACT.obCancel();return}
+ if(T=='foods'&&RE)return ACT.reCancel();
+ if(T=='foods'&&FE)return ACT.feCancel();
+ if(T=='add'&&SM=='x'&&XSUB)return ACT.kind({v:'f'});
+ if(T!='today')goTab('today')}
+// ---- Phone back button (the same block in Big Saucy Recipes, Diet and Budget) ----
+// Every open layer (a popup, an editor, a sub-view, any tab but the first) has one browser-history entry,
+// so Back closes the top layer and only leaves the app from the first tab with nothing open.
+// The app says how deep it is (navDepth) and how to go up one level (navUp); R() calls navSync() after drawing.
+let HD=0,HPOP=0;   // history entries the app has added; set while the app removes its own entries
+function navSync(){if(HPOP)return;const d=navDepth();
+ if(d>HD){const ua=navigator.userActivation;if(ua&&!ua.isActive)return;   // entries added without a tap get skipped by Back, so wait for one
+  try{while(HD<d){history.pushState({nav:HD+1},'');HD++}}catch(_){}}
+ else if(d<HD){const n=HD-d;HD=d;HPOP=1;try{history.go(-n)}catch(_){HPOP=0}}}
+addEventListener('popstate',e=>{if(HPOP){HPOP=0;navSync();return}
+ const to=Math.max(0,(e.state&&e.state.nav)||0);if(to>HD){HD=to;navSync();return}   // Forward: undo it
+ let n=HD-to;HD=to;while(n-->0&&navDepth()>0)navUp();navSync()});
+['pointerup','touchend','keydown'].forEach(t=>addEventListener(t,()=>setTimeout(navSync),true));   // catch layers opened by a long press
 function goTab(id){if(id==T){scrollTo({top:0,behavior:'smooth'});return}if(id!='foods'){RE=null;RERR='';FE=null;FERR='';UE=0}const o=TABS.map(t=>t[0]).concat('more'),dir=o.indexOf(id)>o.indexOf(T)?1:-1;T=id;R();scrollTo(0,0);slideIn(dir)}
 
 // ---- Nav highlight: place the pill on tab `a`, or part-way (p = 0..1) toward tab `b` while swiping ----
