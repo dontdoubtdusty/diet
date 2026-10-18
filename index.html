@@ -646,11 +646,23 @@ let RECC=null;
 function recentAll(){if(RECC)return RECC;const seen=new Set(S.foods.map(f=>fkey(f.n,f.br))),rec=[];
  Object.keys(S.days).sort().reverse().slice(0,21).forEach(d=>MEALS.forEach(m=>items(d,m.k).slice().reverse().forEach(x=>{const b=baseFood(x),k=fkey(b.n,x.br);if(!b.n||seen.has(k))return;seen.add(k);rec.push({n:b.n,cal:b.cal,br:x.br||'',sz:x.sz||''})})));
  return RECC=rec}
-function matches(){const q=FN.trim().toLowerCase(),hit=f=>!q||((f.n||'')+' '+(f.br||'')).toLowerCase().includes(q),saved=S.foods.map((f,i)=>({...f,i})).filter(hit);
- return {saved,rec:recentAll().filter(hit).slice(0,8)}}
-function sheetList(){const {saved,rec}=matches(),fi=(src,i,f,sv)=>`<div class="fi"><button class="fb" data-a="pick" data-src="${src}" data-i="${i}"><span class="fn">${esc(f.n)}${isRec(f)?`<small class="rsub"><span class="rtag">Recipe</span>${esc(partsTxt(f))}</small>`:subLine(f)}</span><span class="fc">${fmt(num(f.cal)*Q)} cal</span><span class="pl" aria-hidden="true">+</span></button>${sv?`<button class="fsv" data-a="saveRec" data-i="${i}">Save</button>`:''}</div>`;
- return (saved.length?`<div class="sec">My foods</div>${saved.map((f,i)=>fi('s',i,f)).join('')}`:'')+(rec.length?`<div class="sec" style="margin-top:10px">Recent</div>${rec.map((f,i)=>fi('r',i,f,1)).join('')}`:'')
- +(!saved.length&&!rec.length?`<p class="mu">${FN.trim()?'No saved foods match. Enter the calories above and tap Add.':'Foods you save will show up here.'}</p>`:'')}
+// Frequent foods for one meal: what you logged there on at least 2 of the last 30 days, most days first.
+// Foods that match a saved food (by link or by name and brand) point at it; the rest carry their latest calories.
+let FREQC=null;
+function frequent(k){if(FREQC&&FREQC.rec===recentAll()&&FREQC[k])return FREQC[k];if(!FREQC||FREQC.rec!==recentAll())FREQC={rec:recentAll()};
+ const t=tdy(),from=addDays(t,-30),byKey={},tally={};S.foods.forEach(f=>{byKey[fkey(f.n,f.br)]=f});
+ Object.keys(S.days).filter(d=>d>=from&&d<=t).sort().reverse().forEach(d=>{const day=new Set();items(d,k).forEach(x=>{const b=baseFood(x);if(!b.n)return;
+  const sf=(x.fid&&S.foods.find(f=>f.id==x.fid))||byKey[fkey(b.n,x.br)],id=sf?'s:'+sf.id:'r:'+fkey(b.n,x.br);if(day.has(id))return;day.add(id);
+  const e=tally[id]||(tally[id]={n:0,last:d,f:sf||{n:b.n,cal:b.cal,br:x.br||'',sz:x.sz||''},sv:!!sf});e.n++})});
+ return FREQC[k]=Object.values(tally).filter(e=>e.n>=2).sort((a,b)=>b.n-a.n||(a.last<b.last?1:-1)).slice(0,3)}
+function matches(){const q=FN.trim().toLowerCase(),hit=f=>!q||((f.n||'')+' '+(f.br||'')).toLowerCase().includes(q),
+ top=(SM=='x'?[]:frequent(SM)).filter(e=>hit(e.f)),tid=new Set(top.filter(e=>e.sv).map(e=>e.f.id)),tk=new Set(top.map(e=>fkey(e.f.n,e.f.br))),
+ saved=S.foods.map((f,i)=>({...f,i})).filter(f=>hit(f)&&!tid.has(f.id)&&!tk.has(fkey(f.n,f.br)));
+ return {top,saved,rec:recentAll().filter(f=>hit(f)&&!tk.has(fkey(f.n,f.br))).slice(0,8)}}
+function sheetList(){const {top,saved,rec}=matches(),fi=(src,i,f,sv)=>`<div class="fi"><button class="fb" data-a="pick" data-src="${src}" data-i="${i}"><span class="fn">${esc(f.n)}${isRec(f)?`<small class="rsub"><span class="rtag">Recipe</span>${esc(partsTxt(f))}</small>`:subLine(f)}</span><span class="fc">${fmt(num(f.cal)*Q)} cal</span><span class="pl" aria-hidden="true">+</span></button>${sv?`<button class="fsv" data-a="saveRec" data-src="${src}" data-i="${i}">Save</button>`:''}</div>`;
+ return (top.length?`<div class="sec">Frequent at ${mealOf(SM).n}</div>${top.map((e,i)=>fi('t',i,e.f,!e.sv)).join('')}`:'')
+ +(saved.length?`<div class="sec"${top.length?' style="margin-top:10px"':''}>My foods</div>${saved.map((f,i)=>fi('s',i,f)).join('')}`:'')+(rec.length?`<div class="sec" style="margin-top:10px">Recent</div>${rec.map((f,i)=>fi('r',i,f,1)).join('')}`:'')
+ +(!top.length&&!saved.length&&!rec.length?`<p class="mu">${FN.trim()?'No saved foods match. Enter the calories above and tap Add.':'Foods you save will show up here.'}</p>`:'')}
 function xPrev(){const h=parseFloat(XH);return h>0&&h<=24?`<b>\u2212${fmt(burn(h,XL,xWeight()))}</b>calories burned`:`<b>\u2013</b>Enter the time to see calories burned`}
 function xForm(){return `<div class="xform"><input id="xn" type="text" placeholder="What did you do? (optional)" autocomplete="off" value="${esc(XN)}">
  <div class="xchips">${XQUICK.map(q=>`<button class="${XN==q?'on':''}" data-a="xq" data-v="${q}">${q}</button>`).join('')}</div>
@@ -709,8 +721,8 @@ const ACT={
   if(!(c>0)){const m=n&&S.foods.find(f=>f.n.toLowerCase()==n.toLowerCase());if(m){sheetLog(m.n,m.cal,{...(isRec(m)?{}:metaOf(m)),fid:m.id});return}SFL='Enter the calories for one serving.';SFE=1;R();$('#fc')?.focus();return}
   let fid='';if($('#fsave')?.checked&&n&&!S.foods.some(f=>f.n.toLowerCase()==n.toLowerCase())){fid=uid('f');S.foods.unshift({id:fid,n,cal:Math.round(c)})}
   sheetLog(n||'Food',c,fid?{fid}:null)},
- pick:d=>{const {saved,rec}=matches(),f=(d.src=='s'?saved:rec)[+d.i];if(f)sheetLog(f.n,f.cal,{...(isRec(f)?{}:metaOf(f)),fid:d.src=='s'?f.id:''})},
- saveRec:d=>{const f=matches().rec[+d.i];if(!f)return;const nf=newFoodObj(f.n,f.cal,f.br,f.sz);S.foods.unshift(nf);linkMatching(nf);save();SFL=`Saved ${f.n} to My foods`;SFE=0;R()},
+ pick:d=>{const {top,saved,rec}=matches(),e=d.src=='t'&&top[+d.i],f=e?e.f:(d.src=='s'?saved:rec)[+d.i],sv=e?e.sv:d.src=='s';if(f)sheetLog(f.n,f.cal,{...(isRec(f)?{}:metaOf(f)),fid:sv?f.id:''})},
+ saveRec:d=>{const m=matches(),f=d.src=='t'?(m.top[+d.i]&&!m.top[+d.i].sv&&m.top[+d.i].f):m.rec[+d.i];if(!f)return;const nf=newFoodObj(f.n,f.cal,f.br,f.sz);S.foods.unshift(nf);linkMatching(nf);save();SFL=`Saved ${f.n} to My foods`;SFE=0;R()},
  saveItem:d=>{const x=items(D,d.m)[+d.i];if(!x)return;const f=baseFood(x);if(!f.n){toast('Give it a name first');return}
   if(inFoods(f.n,x.br)){toast(`${f.n} is already in My foods`);return}
   const nf=newFoodObj(f.n,f.cal,x.br,x.sz);S.foods.unshift(nf);x.fid=nf.id;linkMatching(nf);save();R();toast(`Saved ${f.n} to My foods`,()=>{const i=S.foods.indexOf(nf);if(i>=0)S.foods.splice(i,1);save();R()})},
