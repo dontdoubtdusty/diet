@@ -9,7 +9,7 @@ A simple calorie tracker that runs in your browser. It's part of the Big apps, a
 - Logging exercise, with calories burned estimated from duration and intensity
 - Saved foods and recipes, so you can log something with one tap
 - A 7-day chart showing how each day compared with your target
-- Light, dark and automatic themes
+- Light, dark and automatic themes, plus a Day/Night option that switches to dark at 6pm and back to light at 6am
 - Backups you can share, download and import, with a weekly reminder
 - Optional sync across devices with an email sign-in
 

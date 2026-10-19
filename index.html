@@ -308,6 +308,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .obres span{font-weight:800;opacity:.85}.obres b{font:600 60px/1.05 var(--fd)}
 /* Goal form: stack labels on phones so nothing spills past the card */
 .seg.p4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.seg.th button{flex:1 1 auto}   /* theme row: let "Day/Night" take the room its label needs */
 @media(max-width:520px){.fr{flex-wrap:wrap;row-gap:6px}.fr>label{width:100%}.seg.p4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
@@ -629,7 +630,7 @@ function obNext(){const k=obSteps()[OB],vals=[];
 let OBSNAP=null;
 
 // ---- Settings ----
-function vMore(){return `<section class="card"><h2>Settings</h2><div class="sec">Appearance</div><div class="seg">${[['system','Auto'],['light','Light'],['dark','Dark']].map(([v,l])=>`<button class="${S.set.theme==v?'on':''}" data-a="theme" data-v="${v}">${l}</button>`).join('')}</div></section>
+function vMore(){return `<section class="card"><h2>Settings</h2><div class="sec">Appearance</div><div class="seg th">${[['system','Auto'],['daynight','Day/Night'],['light','Light'],['dark','Dark']].map(([v,l])=>`<button class="${S.set.theme==v?'on':''}" data-a="theme" data-v="${v}">${l}</button>`).join('')}</div></section>
  ${window.CloudSync?CloudSync.view():''}
  <section class="card"><h2>Backup &amp; restore</h2><p class="mu" style="margin:0">Everything is saved in this browser only. Download a backup now and then to keep it safe, or to move it to another device.</p>
  <p class="mu" style="margin:8px 0 0;font-weight:700">${S.set.lastBk?'Last backup: '+longDate(iso(new Date(S.set.lastBk))):'No backup yet.'}</p>
@@ -703,7 +704,7 @@ function parseBk(txt){let j=JSON.parse(txt);if(j&&j.app&&j.data)j=j.data;
  const food=x=>{const e=entry('f')(x);if(e&&Array.isArray(x.parts))e.parts=x.parts.filter(obj).map(q=>({fid:String(q.fid||''),n:String(q.n??''),cal:Math.round(num(q.cal)),q:num(q.q)>0?num(q.q):1}));return e};
  for(const [d,x] of Object.entries(j.days)){if(!/^\d{4}-\d\d-\d\d$/.test(d)||!obj(x))continue;const o={};MEALS.forEach(m=>o[m.k]=Array.isArray(x[m.k])?x[m.k].map(entry('i')).filter(Boolean):[]);o.x=Array.isArray(x.x)?x.x.filter(obj).map(e=>({id:String(e.id||uid('x')),n:String(e.n??''),h:num(e.h),lvl:Math.min(2,Math.max(0,Math.floor(num(e.lvl)))),w:num(e.w),cal:Math.round(num(e.cal))})):[];if(num(x.t)>0)o.t=num(x.t);days[d]=o}
  const set=obj(j.set)?j.set:{},prof=obj(j.prof)?j.prof:{};
- return {v:Math.max(0,Math.floor(num(j.v))),set:{...set,theme:['system','light','dark'].includes(set.theme)?set.theme:'system',units:Array.isArray(set.units)?set.units.filter(u=>typeof u=='string'&&u.trim()).map(u=>u.trim()):UNITS.slice()},prof:{...BLANK(),...prof,sex:prof.sex=='m'?'m':'f'},foods:j.foods.map(food).filter(Boolean),days}}
+ return {v:Math.max(0,Math.floor(num(j.v))),set:{...set,theme:['system','daynight','light','dark'].includes(set.theme)?set.theme:'system',units:Array.isArray(set.units)?set.units.filter(u=>typeof u=='string'&&u.trim()).map(u=>u.trim()):UNITS.slice()},prof:{...BLANK(),...prof,sex:prof.sex=='m'?'m':'f'},foods:j.foods.map(food).filter(Boolean),days}}
 const bkErr=(e,what)=>toast(e=='newer'?'That backup is from a newer version of this app.':`That ${what} is not a calorie backup.`);
 function askRestore(j){if(!confirm('Replace everything on this device with this backup? This can’t be undone.'))return;S=j;migrate();RECC=null;flush();D=tdy();OB=S.set.onboarded?-1:0;R();toast('Backup restored')}
 const ACT={
@@ -818,7 +819,12 @@ function morphKids(a,b){const A=[...a.childNodes],B=[...b.childNodes];B.forEach(
 function patch(el,html,full){if(full){el.innerHTML=html;return}const t=document.createElement('template');t.innerHTML=html;morphKids(el,t.content)}
 
 const ROOT=document.documentElement,DARK=matchMedia('(prefers-color-scheme: dark)');DARK.addEventListener?.('change',()=>S&&S.set.theme=='system'&&R());
-function applyTheme(){const th=S.set.theme||'system';ROOT.dataset.theme=th=='system'?(DARK.matches?'dark':'light'):th}
+function applyTheme(){ROOT.dataset.theme=themeOf(S.set.theme||'system');dnTimer()}
+// Day/Night theme: dark from 6pm to 6am, light the rest of the day. A timer flips it on the hour while the app is open.
+const isNight=()=>{const h=new Date().getHours();return h>=18||h<6};
+const themeOf=th=>th=='system'?(DARK.matches?'dark':'light'):th=='daynight'?(isNight()?'dark':'light'):th;
+let DNT=0;function dnTimer(){clearTimeout(DNT);if(S.set.theme!='daynight')return;const n=new Date(),t=new Date(n),h=n.getHours();t.setHours(h<6?6:h<18?18:30,0,1,0);DNT=setTimeout(R,t-n)}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S&&S.set.theme=='daynight'&&document.documentElement.dataset.theme!=themeOf('daynight'))R()});   // timers pause while the phone sleeps
 const ICON={today:'<path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M8 7c0-2 2-2 2-4M13 7c0-2 2-2 2-4"/>',week:'<path d="M4 20V11M10 20V5M16 20v-7M22 20H2"/>',foods:'<path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/>',goal:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/><path d="M12 3v2M21 12h-2"/>'};
 const TABS=[['today','Today',vToday],['week','Week',vWeek],['add','Add',vAdd],['foods','My foods',vFoods],['goal','Goal',vGoal]];
 const tabCols=id=>TC[id]||TC.today;
