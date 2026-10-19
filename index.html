@@ -234,16 +234,17 @@ textarea.nm{flex:1 1 auto;height:auto;min-height:0;margin:0;resize:none;overflow
 details summary{cursor:pointer;list-style:none;margin-top:12px}summary::-webkit-details-marker{display:none}
 
 /* Bottom nav */
-nav{position:fixed;z-index:6;left:0;right:0;bottom:0;display:flex;align-items:center;gap:2px;background:color-mix(in srgb,var(--card) 92%,transparent);-webkit-backdrop-filter:saturate(1.6) blur(14px);backdrop-filter:saturate(1.6) blur(14px);border-top:1px solid var(--bd);padding-top:5px;padding-bottom:calc(5px + env(safe-area-inset-bottom,0px));padding-left:max(6px,env(safe-area-inset-left,0px));padding-right:max(6px,env(safe-area-inset-right,0px))}
-.nh{flex:1;display:flex;gap:2px;min-width:0;position:relative;z-index:1}
-/* One highlight pill that glides between tabs; the buttons themselves never move */
+nav{position:fixed;z-index:6;left:0;right:0;bottom:0;display:flex;align-items:center;gap:0;background:color-mix(in srgb,var(--card) 92%,transparent);-webkit-backdrop-filter:saturate(1.6) blur(14px);backdrop-filter:saturate(1.6) blur(14px);border-top:1px solid var(--bd);padding-top:5px;padding-bottom:calc(5px + env(safe-area-inset-bottom,0px));padding-left:max(6px,env(safe-area-inset-left,0px));padding-right:max(6px,env(safe-area-inset-right,0px))}
+.nh{flex:1 1 0;display:flex;gap:0;min-width:0;position:relative;z-index:1}
+/* One small highlight pill that sits behind the active tab's icon only and glides between tabs; the buttons themselves never move */
 .hl{position:absolute;left:0;top:0;z-index:0;pointer-events:none;border-radius:16px;width:var(--hw,0);height:var(--hh,0);transform:translate3d(var(--hx,0),var(--hy,0),0);background:color-mix(in srgb,var(--hc,var(--pc)) 14%,transparent);opacity:var(--ho,0);transition:transform .34s var(--bounce),width .34s var(--bounce),opacity .2s,background .25s}
 nav.drag .hl{transition:none}
 /* Neighbouring tab shown beside the current one while swiping */
 #peek{position:fixed;left:0;right:0;bottom:0;z-index:4;overflow:hidden;pointer-events:none;background:var(--bg);will-change:transform}
-nav .tb{flex:1;min-width:0;background:none;color:var(--mu);border-radius:16px;padding:6px 0 5px;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:2px;transition:color .25s}
+nav .tb{flex:1 1 0;min-width:0;background:none;color:var(--mu);border-radius:16px;padding:7px 0 5px;font-size:11px;font-weight:600;letter-spacing:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:color .25s}
+nav .tb>span{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
 nav .tb.on{color:var(--tc)}
-.ni{width:23px;height:23px}
+.ni{flex:none;width:24px;height:24px}
 .qab{flex:none;width:60px;height:60px;margin:-24px 6px 0;border-radius:50%;background:linear-gradient(135deg,#ffd84a 0%,#ffae2b 55%,#ff8a1f 100%);color:#3a2300;display:flex;flex-direction:column;align-items:center;justify-content:center;border:4px solid var(--bg);box-shadow:0 8px 20px -4px rgba(255,120,20,.6);transition:transform .25s var(--bounce)}
 .qab b{font:600 28px/.9 var(--fd)}.qab span{font-size:9px;font-weight:800}
 .qab:is(:active,.prs){transform:scale(.92)}
@@ -868,8 +869,10 @@ addEventListener('popstate',e=>{if(HPOP){HPOP=0;navSync();return}
 function goTab(id){if(id==T){scrollTo({top:0,behavior:'smooth'});return}if(id!='foods'){RE=null;RERR='';FE=null;FERR='';UE=0}const o=TABS.map(t=>t[0]).concat('more'),dir=o.indexOf(id)>o.indexOf(T)?1:-1;T=id;R();scrollTo(0,0);slideIn(dir)}
 
 // ---- Nav highlight: place the pill on tab `a`, or part-way (p = 0..1) toward tab `b` while swiping ----
-function hlBox(id){const nav=$('#nav'),b=nav.querySelector(`button[data-id="${id}"]`);if(!b)return null;const n=nav.getBoundingClientRect(),r=b.getBoundingClientRect(),q=id=='add';
- return {x:r.left-n.left,y:r.top-n.top,w:r.width,h:r.height,o:q?0:1,c:q?'#ff8a1f':tabCols(id)[0]}}
+function hlBox(id){const nav=$('#nav'),b=nav.querySelector(`button[data-id="${id}"]`);if(!b)return null;const n=nav.getBoundingClientRect(),br=b.getBoundingClientRect(),q=id=='add',ic=b.querySelector('.ni'),r=ic?ic.getBoundingClientRect():br;
+ // Pill hugs the icon: up to 48px wide (never wider than the slot) and 30px tall, centred on the icon
+ const w=Math.min(48,br.width-4),h=30,cx=r.left+r.width/2-n.left,cy=r.top+r.height/2-n.top;
+ return {x:cx-w/2,y:cy-h/2,w,h,o:q?0:1,c:q?'#ff8a1f':tabCols(id)[0]}}
 function placeHL(a,b,p=0){const nav=$('#nav'),A=hlBox(a);if(!A){nav.style.setProperty('--ho','0');return}
  const B=b&&hlBox(b)||A,L=(u,v)=>u+(v-u)*p,s=nav.style;
  s.setProperty('--hx',L(A.x,B.x).toFixed(1)+'px');s.setProperty('--hy',L(A.y,B.y).toFixed(1)+'px');s.setProperty('--hw',L(A.w,B.w).toFixed(1)+'px');s.setProperty('--hh',L(A.h,B.h).toFixed(1)+'px');s.setProperty('--ho',L(A.o,B.o).toFixed(3));
