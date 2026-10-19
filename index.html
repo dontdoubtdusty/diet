@@ -63,7 +63,7 @@ main,#peek>.pv{max-width:1100px;margin:0 auto;padding-block:12px;padding-left:ma
 /* Buttons & fields */
 button{cursor:pointer;border:0;font:inherit}
 .btn,.hbtn{background:linear-gradient(135deg,var(--pc),var(--pc2));color:#fff;border-radius:14px;padding:10px 16px;font-weight:800;box-shadow:0 6px 14px -6px color-mix(in srgb,var(--pc) 70%,transparent);transition:transform .25s var(--bounce),filter .1s}
-.btn:active,.hbtn:active,.addm:active,.fb:active{transform:scale(.95)}
+.btn:is(:active,.prs),.hbtn:is(:active,.prs),.addm:is(:active,.prs),.fb:is(:active,.prs){transform:scale(.95)}
 .btn.g{background:none;color:var(--mu);padding:8px 10px;font-weight:600;box-shadow:none}
 .btn.bd{border:1px solid var(--bd);color:var(--tx)}
 .btn.wide{width:100%}
@@ -92,7 +92,7 @@ textarea.nm{flex:1 1 auto;height:auto;min-height:0;margin:0;resize:none;overflow
 .x.sv{color:var(--mu)}.x.sv.saved{color:var(--ac)}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
 .seg button{flex:1;min-width:0;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:999px;padding:9px 6px;font-weight:800;font-size:14px;white-space:nowrap;transition:transform .25s var(--bounce)}
-.seg button:active{transform:scale(.95)}
+.seg button:is(:active,.prs){transform:scale(.95)}
 .seg button.on{background:linear-gradient(135deg,var(--pc),var(--pc2));border-color:transparent;color:#fff;box-shadow:0 6px 14px -6px color-mix(in srgb,var(--pc) 70%,transparent)}
 .chip{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--fld);color:var(--mu);white-space:nowrap}
 .chip.ok{background:color-mix(in srgb,var(--lime) 18%,transparent);color:var(--ac)}
@@ -246,7 +246,7 @@ nav .tb.on{color:var(--tc)}
 .ni{width:23px;height:23px}
 .qab{flex:none;width:64px;height:64px;margin:-26px 6px 0;border-radius:50%;background:linear-gradient(135deg,#ffd84a 0%,#ffae2b 55%,#ff8a1f 100%);color:#3a2300;display:flex;flex-direction:column;align-items:center;justify-content:center;border:4px solid var(--bg);box-shadow:0 8px 20px -4px rgba(255,120,20,.6);transition:transform .25s var(--bounce)}
 .qab b{font:600 30px/.9 var(--fd)}.qab span{font-size:9px;font-weight:800}
-.qab:active{transform:scale(.92)}
+.qab:is(:active,.prs){transform:scale(.92)}
 
 /* Add tab */
 .shd{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -272,7 +272,7 @@ nav .tb.on{color:var(--tc)}
 .fsv{flex:none;background:none;color:var(--mu);font-size:12px;font-weight:800;padding:6px 8px;border-radius:10px;border:1px solid var(--bd)}
 /* Drag to move foods between meals */
 .grip{flex:none;display:flex;align-items:center;justify-content:center;width:22px;height:34px;align-self:center;margin-left:-6px;color:var(--mu);opacity:.45;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none}
-.grip:active{cursor:grabbing}
+.grip:is(:active,.prs){cursor:grabbing}
 .it.dragging{opacity:.3}
 .ghostrow{position:fixed;z-index:40;pointer-events:none;background:var(--card);border-radius:10px;box-shadow:0 10px 24px rgba(16,24,40,.18),0 0 0 1px var(--bd)}
 .ghostrow .grip{opacity:1;color:var(--pc)}
@@ -303,7 +303,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .opt{background:var(--card);border:1.5px solid var(--bd);color:var(--tx);border-radius:18px;padding:13px 16px;text-align:left;display:flex;flex-direction:column;gap:2px;transition:transform .2s var(--bounce),border-color .15s,background .15s}
 .opt b{font:600 17px/1.25 var(--fd)}.opt span{color:var(--mu);font-size:13px;font-weight:600}
 .opt.on{border-color:var(--pc);background:color-mix(in srgb,var(--pc) 12%,var(--card))}
-.opt:active{transform:scale(.97)}
+.opt:is(:active,.prs){transform:scale(.97)}
 .obres{text-align:center;padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .obres span{font-weight:800;opacity:.85}.obres b{font:600 60px/1.05 var(--fd)}
 /* Goal form: stack labels on phones so nothing spills past the card */
@@ -319,6 +319,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 <nav id="nav"></nav>
 <div id="toast" role="status" aria-live="polite"></div>
 
+<script src="feedback.js"></script>
 <script src="sync.js"></script>
 <script>
 // =====================================================================
@@ -485,7 +486,7 @@ function syncRecipes(){if(!S||!Array.isArray(S.foods))return;const by={};S.foods
  S.foods.forEach(f=>{if(!isRec(f))return;f.parts.forEach(p=>{const s=p.fid&&by[p.fid];if(s){p.n=s.n;p.cal=Math.round(num(s.cal))}});f.cal=Math.round(sum(f.parts,p=>num(p.cal)*num(p.q)))})}
 let TT=0,UNDO=null,UGRP='',UCNT=0;
 // grp: consecutive toasts in the same group (e.g. several quick deletes) share one Undo that reverts all of them, newest first
-function toast(msg,undo,grp){const el=$('#toast');
+function toast(msg,undo,grp){window.Feedback&&Feedback.fromToast(msg);const el=$('#toast');
  if(undo&&grp&&UNDO&&UGRP==grp){const prev=UNDO,cur=undo;undo=()=>{cur();prev()};UCNT++;msg=grp=='del'?`Deleted ${UCNT} items`:msg}else UCNT=1;
  UGRP=undo?grp||'':'';el.innerHTML=`<span>${esc(msg)}</span>${undo?'<button data-a="undo">Undo</button>':''}`;UNDO=undo||null;el.classList.add('on');clearTimeout(TT);TT=setTimeout(()=>{el.classList.remove('on');UNDO=null;UGRP=''},5000)}
 // Backup reminder: after 3+ logged days, nudge if the last backup (or snooze) is more than a week old
@@ -630,7 +631,7 @@ function obNext(){const k=obSteps()[OB],vals=[];
 let OBSNAP=null;
 
 // ---- Settings ----
-function vMore(){return `<section class="card"><h2>Settings</h2><div class="sec">Appearance</div><div class="seg th">${[['system','Auto'],['daynight','Day/Night'],['light','Light'],['dark','Dark']].map(([v,l])=>`<button class="${S.set.theme==v?'on':''}" data-a="theme" data-v="${v}">${l}</button>`).join('')}</div></section>
+function vMore(){return `<section class="card"><h2>Settings</h2><div class="sec">Appearance</div><div class="seg th">${[['system','Auto'],['daynight','Day/Night'],['light','Light'],['dark','Dark']].map(([v,l])=>`<button class="${S.set.theme==v?'on':''}" data-a="theme" data-v="${v}">${l}</button>`).join('')}</div>${window.Feedback?Feedback.view('th'):''}</section>
  ${window.CloudSync?CloudSync.view():''}
  <section class="card"><h2>Backup &amp; restore</h2><p class="mu" style="margin:0">Everything is saved in this browser only. Download a backup now and then to keep it safe, or to move it to another device.</p>
  <p class="mu" style="margin:8px 0 0;font-weight:700">${S.set.lastBk?'Last backup: '+longDate(iso(new Date(S.set.lastBk))):'No backup yet.'}</p>
@@ -902,7 +903,7 @@ const rmPeek=()=>{const p=$('#peek');if(p)p.remove()};
   if(!commit){mv(m,0,`transform .32s ${EZ_BACK}`);if(p)mv(p,dir*w,`transform .3s ${EZ_IN}`);placeHL(T);setTimeout(()=>{done();rmPeek()},330);return}
   busy=true;const rem=w-Math.abs(dx),dur=Math.round(Math.max(170,Math.min(300,rem/Math.max(1.2,Math.abs(vx)*1.4)))),tr=`transform ${dur}ms cubic-bezier(.2,.8,.2,1)`;
   mv(m,-dir*w,tr);mv(p,0,tr);placeHL(to);
-  try{navigator.vibrate&&navigator.vibrate(8)}catch(_){}
+  window.Feedback&&Feedback.hap('tick')
   setTimeout(()=>{m.style.transition='none';m.style.transform='';T=to;R();scrollTo(0,0);m.style.willChange='';requestAnimationFrame(()=>{rmPeek();m.style.transition='';busy=false})},dur)};
  document.addEventListener('touchend',end,{passive:true});document.addEventListener('touchcancel',end,{passive:true});
 })();
@@ -924,7 +925,7 @@ const rmPeek=()=>{const p=$('#peek');if(p)p.remove()};
   G={row,gh,mk,from:row.dataset.m,i:+row.dataset.i,ox:e.clientX,oy:e.clientY,x:e.clientX,y:e.clientY,to:null,idx:0,pid:e.pointerId};
   document.body.appendChild(gh);row.classList.add('dragging');document.body.classList.add('dragging');
   try{g.setPointerCapture(e.pointerId)}catch(_){}
-  if(navigator.vibrate)try{navigator.vibrate(8)}catch(_){}
+  window.Feedback&&Feedback.hap('tick')
   place(e.clientX,e.clientY);G.raf=requestAnimationFrame(scrollLoop)});
  document.addEventListener('pointermove',e=>{if(!G||e.pointerId!==G.pid)return;e.preventDefault();G.x=e.clientX;G.y=e.clientY;place(G.x,G.y)},{passive:false});
  // Stop the page from scrolling under the finger while dragging

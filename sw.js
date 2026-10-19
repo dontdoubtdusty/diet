@@ -2,12 +2,13 @@
 // Your log is NOT stored here; it lives in the browser's localStorage. This file only keeps
 // a copy of the app itself so it opens without a connection.
 // When you change any file below, bump VERSION so phones pick up the new copy.
-const VERSION = 'v8';
+const VERSION = 'v9';
 const CACHE = 'calorie-tracker-' + VERSION;
 const APP_FILES = [
   './',
   './index.html',
   './sync.js',
+  './feedback.js',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
