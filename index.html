@@ -20,11 +20,11 @@
 /* Layout: one phone column (meal cards side by side on wide screens), sticky header, fixed bottom nav with a center Add button.
    Color: each tab has its own accent (--pc/--pc2, set in R()); meals keep their citrus colors (lemon, lime, tangerine, grapefruit). */
 :root{color-scheme:light;--bg:#fffbea;--card:#ffffff;--fld:#fff3cc;--tx:#2b2410;--mu:#7a7052;--bd:#f0e2b2;
- --lemon:#f2b705;--lime:#5aa82a;--tang:#ff7a1a;--ex:#1b9fc2;--grape:#ec3f57;--ac:#3f8f1c;--neg:#d92f48;--wn:#e08600;
+ --lemon:#f2b705;--lime:#5aa82a;--tang:#ff7a1a;--ex:#1b9fc2;--grape:#ec3f57;--ac:#3f8f1c;--neg:#d92f48;--wn:#e08600;--wt:#1b9a8a;
  --pc:#ff8a1f;--pc2:#ec3f57;--brand:#ffc220;--gl:10%;--tst:#2b2410;--fast:.16s;
  --sh:0 1px 2px rgba(90,60,0,.06),0 10px 24px -14px rgba(130,80,0,.30);
  --fd:'Fredoka','Nunito',system-ui,sans-serif;--bounce:cubic-bezier(.34,1.56,.64,1)}
-:root[data-theme="dark"]{color-scheme:dark;--ex:#4cc7e6;--bg:#15130a;--card:#211e11;--fld:#2d2916;--tx:#fbf4dc;--mu:#b5a983;--bd:#3a341d;--lemon:#ffd23f;--lime:#8ad457;--tang:#ff9b4a;--grape:#ff6b7c;--ac:#8ad457;--neg:#ff6b7c;--wn:#ffb547;--sh:0 10px 24px -16px rgba(0,0,0,.75);--gl:20%;--tst:#3a341d}
+:root[data-theme="dark"]{color-scheme:dark;--ex:#4cc7e6;--bg:#15130a;--card:#211e11;--fld:#2d2916;--tx:#fbf4dc;--mu:#b5a983;--bd:#3a341d;--lemon:#ffd23f;--lime:#8ad457;--tang:#ff9b4a;--grape:#ff6b7c;--ac:#8ad457;--neg:#ff6b7c;--wn:#ffb547;--wt:#3fc4b2;--sh:0 10px 24px -16px rgba(0,0,0,.75);--gl:20%;--tst:#3a341d}
 :root[data-theme="dark"] .card{box-shadow:inset 0 1px 0 rgba(255,255,255,.05),var(--sh)}:root[data-theme="dark"] .tiles2>div{background:color-mix(in srgb,var(--pc) 14%,var(--card))}
 
 *{box-sizing:border-box}
@@ -69,7 +69,7 @@ button{cursor:pointer;border:0;font:inherit}
 .btn.wide{width:100%}
 .lnk{background:none;color:var(--mu);padding:8px;font-weight:600}
 .danger{background:none;color:var(--neg);font-weight:700;padding:10px 4px}
-input[type=text],input[type=email],input[type=password],input[type=number],select,textarea{width:100%;min-width:0;padding:10px 12px;border:1px solid transparent;border-radius:12px;background:var(--fld);color:var(--tx);font:inherit;transition:border-color .15s,background .15s}
+input[type=text],input[type=email],input[type=password],input[type=number],input[type=date],select,textarea{width:100%;min-width:0;padding:10px 12px;border:1px solid transparent;border-radius:12px;background:var(--fld);color:var(--tx);font:inherit;transition:border-color .15s,background .15s}
 input[type=number]{-moz-appearance:textfield;appearance:textfield}input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 input:focus,select:focus,textarea:focus{outline:none;border-color:color-mix(in srgb,var(--pc) 60%,transparent);background:var(--card);box-shadow:0 0 0 3px color-mix(in srgb,var(--pc) 18%,transparent)}
 input.a{width:86px;flex:none;text-align:right}
@@ -310,6 +310,25 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 /* Goal form: stack labels on phones so nothing spills past the card */
 .seg.p4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
 .seg.th button{flex:1 1 auto}   /* theme row: let "Day/Night" take the room its label needs */
+/* Weight tracking (Goal tab and Add > Weight) */
+.tiles3{grid-template-columns:repeat(3,minmax(0,1fr))}.tiles3>div{padding:10px 12px}.tiles3 b{font-size:21px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wlog{display:flex;gap:8px;align-items:center}.wlog input[type=date]{flex:1 1 0;min-width:0;width:auto;color-scheme:inherit}.wlog input[type=number]{width:84px;flex:none}.wlog .unit{color:var(--mu);font-size:13px;font-weight:700}.wlog .btn{flex:none}
+.chart .wline{fill:none;stroke:var(--wt);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.chart .wdot{fill:var(--card);stroke:var(--wt);stroke-width:2}.chart .wdot.last{fill:var(--wt)}
+.chart .gline{stroke:var(--lime);stroke-width:1.5;stroke-dasharray:4 4}
+.chart .grid{stroke:var(--bd);stroke-width:1}
+.chart .cy{fill:var(--mu);font:700 10px 'Nunito',sans-serif;text-anchor:start}
+.chart .cx.l{text-anchor:start}.chart .cx.r{text-anchor:end}
+.legend i.wl{height:0;width:14px;border-top:3px solid var(--wt);border-radius:0;vertical-align:3px}
+.legend i.gl{height:0;width:14px;border-top:2px dashed var(--lime);border-radius:0;vertical-align:3px}
+.seg.wr{margin:2px 0 8px}.seg.wr button{padding:6px 4px;font-size:13px}
+.wrow{display:flex;align-items:center;gap:8px;padding:6px 0}.wrow+.wrow{border-top:1px solid var(--bd)}
+.wrow .wd{flex:1;min-width:0}.wrow .wd b{display:block;font-size:14px}.wrow .wd span{font-size:12px;color:var(--mu);font-weight:700}
+.wrow input{width:78px;flex:none;text-align:right}.wrow .unit{color:var(--mu);font-size:13px;font-weight:700}
+.wrow .chip{min-width:58px;text-align:center}
+details.dt summary{margin:0;display:flex;align-items:center;justify-content:space-between}
+details.dt summary .sec{margin:0}details.dt summary svg{color:var(--mu);transition:transform .2s}details.dt[open] summary svg{transform:rotate(90deg)}
+details.dt .form{margin-top:12px}
 @media(max-width:520px){.fr{flex-wrap:wrap;row-gap:6px}.fr>label{width:100%}.seg.p4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
@@ -329,6 +348,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 const LS='calorie-v1';   // localStorage key (holds your data; don't change)
 const MEALS=[{k:'b',n:'Breakfast',c:'var(--lemon)'},{k:'l',n:'Lunch',c:'var(--lime)'},{k:'d',n:'Dinner',c:'var(--tang)'},{k:'s',n:'Snacks',c:'var(--grape)'}];
 const EX={k:'x',n:'Exercise',c:'var(--ex)'};
+const WT={k:'w',n:'Weight',c:'var(--wt)'};
 // Tab colors: each tab tints the page (buttons, card stripes, header glow), like the other Big apps
 const TC={today:['#ff8a1f','#ec3f57'],week:['#3f9f2a','#1b9a8a'],add:['#ff8a1f','#ec3f57'],foods:['#ec3f57','#ff7a59'],goal:['#f57c1f','#e8435a'],more:['#1b9fc2','#3f9f2a']};
 // Intensity: MET value (energy used vs. sitting still), label, examples
@@ -363,7 +383,7 @@ const qs=q=>Number.isInteger(q)?String(q):q.toFixed(1);
 // =====================================================================
 let S,T='today',D=tdy(),O={},SM='b',LM='b',XN='',XH='',XL=1,FN='',FC='',Q=1,SFL='',SFE=0;
 const BLANK=()=>({sex:'f',age:'',ft:'',inch:'',lbs:'',goal:'',act:1.375,pace:1});
-const seed=()=>({v:0,set:{theme:'system'},prof:BLANK(),foods:FOODS.map(([n,cal])=>({id:uid('f'),n,cal})),days:{}});
+const seed=()=>({v:0,set:{theme:'system'},prof:BLANK(),foods:FOODS.map(([n,cal])=>({id:uid('f'),n,cal})),days:{},wts:[]});
 // To change the data shape later, ADD a function to the end of this list; never edit an old one.
 const MIGRATIONS=[
  S=>{S.set=S.set||{};if(!S.set.theme)S.set.theme='system';S.prof=Object.assign(BLANK(),S.prof||{});S.foods=S.foods||[];S.days=S.days||{}},
@@ -379,6 +399,8 @@ const MIGRATIONS=[
   Object.values(S.days).forEach(day=>{if(!day||typeof day!='object')return;MEALS.forEach(m=>(day[m.k]||[]).forEach(x=>{
    if(!(num(x.q)>0)){const mm=/\s\u00d7([\d.]+)$/.exec(x.n||''),q=mm?num(mm[1])||1:1;if(mm)x.n=x.n.replace(/\s\u00d7[\d.]+$/,'').trim();x.q=q;x.per=num(x.cal)/q}
    if(!x.fid){const f=by[fkey(x.n,x.br)];if(f&&Math.abs(num(f.cal)-num(x.per))<=1)x.fid=f.id}}))})},
+ // v6: weigh-ins [{id, d:'YYYY-MM-DD', lbs}], one per day. Your current weight becomes the first one, dated today.
+ S=>{if(!Array.isArray(S.wts))S.wts=[];if(!S.wts.length&&num(S.prof.lbs)>0)S.wts.push({id:uid('w'),d:tdy(),lbs:num(S.prof.lbs)})},
 ];
 function migrate(){for(let v=S.v||0;v<MIGRATIONS.length;v++)MIGRATIONS[v](S);S.v=MIGRATIONS.length;syncRecipes()}
 function load(){try{S=JSON.parse(localStorage.getItem(LS))}catch(e){S=null}if(!S||typeof S!='object')S=seed();migrate()}
@@ -402,7 +424,7 @@ function setPath(p,v,t){const k=p.split('.'),l=k.pop(),o=k.reduce((o,x)=>o==null
  let val=t=='n'?(v===''?'':(parseFloat(v)||0)):v;
  if(k[0]=='prof'&&RANGE[l]){if(val===''&&l=='inch')val=0;const [lo,hi,msg]=RANGE[l];if(!(val>=lo&&val<=hi))return msg}
  if(k[0]=='days'&&l=='n'&&o.fid&&o.n!==val)delete o.fid;   // renamed: it's no longer that saved food
- o[l]=val;if(k[0]=='prof')snapTarget();save();return ''}
+ o[l]=val;if(k[0]=='prof'&&l=='lbs'&&val!=='')logWeight(tdy(),val);if(k[0]=='prof')snapTarget();save();return ''}
 function up(p,v,t,el){const err=setPath(p,v,t);if(err&&err!='gone'){toast(err);if(el)el.value=get(p)??''}R()}
 
 // =====================================================================
@@ -449,6 +471,17 @@ function syncLogged(){const by={};S.foods.forEach(f=>{if(f)by[f.id]=f});let c=0;
 function linkMatching(f){const ids=new Set(S.foods.map(g=>g&&g.id)),key=fkey(f.n,f.br),per=num(f.cal);
  Object.values(S.days).forEach(day=>MEALS.forEach(m=>(day[m.k]||[]).forEach(x=>{if(x.fid&&ids.has(x.fid))return;if(fkey(baseFood(x).n,x.br)==key&&Math.abs(iper(x)-per)<=1)x.fid=f.id})))}
 function logX(d,n,h,lvl){const x=dayEnsure(d),t=target();if(t&&(d>=tdy()||!x.t))x.t=t.t;const w=xWeight(),it={id:uid('x'),n,h,lvl,w,cal:burn(h,lvl,w)};x.x.push(it);return it}
+// ---- Weigh-ins: one per day. The latest one is your current weight, so logging also updates the daily target. ----
+const wSorted=()=>(S.wts||[]).slice().sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
+const latestW=()=>{const a=wSorted();return a.length?a[a.length-1]:null};
+function wSync(){const l=latestW();if(l)S.prof.lbs=l.lbs;snapTarget()}
+// Returns an undo function
+function logWeight(d,lbs){const a=S.wts||(S.wts=[]),v=Math.round(num(lbs)*10)/10,old=a.find(w=>w.d==d),prev=old?old.lbs:null;let it=old;
+ if(old)old.lbs=v;else{it={id:uid('w'),d,lbs:v};a.push(it)}wSync();
+ return ()=>{if(prev!=null)it.lbs=prev;else{const i=S.wts.indexOf(it);if(i>=0)S.wts.splice(i,1)}wSync();save();R()}}
+const wNum=v=>qs(Math.round(num(v)*10)/10);
+const wSigned=v=>{const r=Math.round(v*10)/10;return r==0?'0':(r>0?'+':'\u2212')+qs(Math.abs(r))};
+const wDiff=v=>{const r=Math.round(v*10)/10;return r==0?'No change':(r>0?'+':'\u2212')+qs(Math.abs(r))+' lb'};
 function unlog(d,k,id){const a=items(d,k),i=a.findIndex(x=>x.id==id);if(i>=0)a.splice(i,1);save();R()}
 
 // =====================================================================
@@ -496,7 +529,7 @@ function needBk(){const logged=Object.keys(S.days).filter(d=>MEALS.some(m=>items
  let first=logged[0];for(const d of logged)if(d<first)first=d;
  return Date.now()-Math.max(num(S.set.lastBk),num(S.set.bkSnooze),new Date(first+'T00:00').getTime())>7*DAY_MS}
 const markBk=()=>{S.set.lastBk=Date.now();save()};
-const mealOf=k=>MEALS.find(m=>m.k==k)||EX;
+const mealOf=k=>MEALS.find(m=>m.k==k)||(k=='w'?WT:EX);
 const defMeal=()=>{const h=new Date().getHours()+new Date().getMinutes()/60;return h<10.5?'b':h<14.5?'l':h<17?'s':h<21?'d':'s'};
 
 // =====================================================================
@@ -590,11 +623,42 @@ function resLines(t){const rate=t.phase=='lose'?Math.round(t.rate*10)/10:0;
  ${t.phase=='maintain'?`<p class="note">${t.why=='gain'?'Your goal is above your current weight. This tracker plans for losing or maintaining, so your target is maintenance.'
   :t.why=='low'?`Your maintenance estimate is already at or below ${fmt(t.floorV)}, a common minimum, so your target is maintenance. A doctor or dietitian can help you plan weight loss safely.`
   :'You’re at your goal weight, so your target is maintenance.'}</p>`:''}`}
+// ---- Weight (Goal tab) ----
+let WD='',WL='',WFL='',WFE=0,WR='3m',WALL=0;   // log date, log weight, message, is-error, chart range, show whole history
+const WRANGES=[['1m','1M',30],['3m','3M',91],['1y','1Y',365],['all','All',0]];
+const md=d=>new Date(d+'T00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'});
+function wChart(pts){const W=340,H=170,pl=32,pr=8,pt=12,pb=22,iw=W-pl-pr,ih=H-pt-pb,g=num(S.prof.goal);
+ const vals=pts.map(p=>p.lbs).concat(g>0?[g]:[]);let lo=Math.min(...vals),hi=Math.max(...vals);
+ if(hi-lo<4){const m=(hi+lo)/2;lo=m-2;hi=m+2}const pad=(hi-lo)*.12;lo-=pad;hi+=pad;
+ const tm=d=>new Date(d+'T00:00').getTime(),t0=tm(pts[0].d),span=tm(pts[pts.length-1].d)-t0;
+ const x=p=>span>0?pl+(tm(p.d)-t0)/span*iw:pl+iw/2,y=v=>pt+(hi-v)/(hi-lo)*ih;
+ const step=[1,2,5,10,20,25,50,100].find(s=>(hi-lo)/s<=4)||100,ticks=[];for(let v=Math.ceil(lo/step)*step;v<=hi;v+=step)ticks.push(v);
+ const grid=ticks.map(v=>`<line x1="${pl}" x2="${W-pr}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="grid"/><text x="0" y="${(y(v)+3.5).toFixed(1)}" class="cy">${v}</text>`).join('');
+ const gl=g>0?`<line x1="${pl}" x2="${W-pr}" y1="${y(g).toFixed(1)}" y2="${y(g).toFixed(1)}" class="gline"/>`:'';
+ const path=pts.length>1?`<path class="wline" d="${pts.map((p,i)=>(i?'L':'M')+x(p).toFixed(1)+' '+y(p.lbs).toFixed(1)).join('')}"/>`:'';
+ const dots=pts.map((p,i)=>{const last=i==pts.length-1;return pts.length<=45||last?`<circle cx="${x(p).toFixed(1)}" cy="${y(p.lbs).toFixed(1)}" r="${last?4.5:3}" class="wdot${last?' last':''}"><title>${md(p.d)}: ${wNum(p.lbs)} lb</title></circle>`:''}).join('');
+ const xl=pts.length>1?`<text x="${pl}" y="${H-6}" class="cx l">${md(pts[0].d)}</text><text x="${W-pr}" y="${H-6}" class="cx r">${md(pts[pts.length-1].d)}</text>`:`<text x="${pl+iw/2}" y="${H-6}" class="cx">${md(pts[0].d)}</text>`;
+ return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight over time, ${pts.length} weigh-in${pts.length==1?'':'s'}">${grid}${gl}${path}${dots}${xl}</svg>
+ <div class="legend"><span><i class="wl"></i>Weight</span>${g>0?`<span><i class="gl"></i>Goal ${wNum(g)} lb</span>`:''}</div>`}
+function wCard(){const a=wSorted(),l=a[a.length-1],f=a[0],g=num(S.prof.goal),T0=tdy();if(!WD||WD>T0)WD=T0;
+ const tile=(lab,v,sub)=>`<div><span class="mu">${lab}</span><b>${v}</b><small>${sub}</small></div>`;
+ const tiles=l?`<div class="tiles2 tiles3">${tile('Current',wNum(l.lbs),'lb · '+md(l.d))}${tile('Change',a.length>1?wSigned(l.lbs-f.lbs):'–',a.length>1?'lb since '+md(f.d):'Log more to see')}${tile('To goal',g>0?(l.lbs-g>0.05?wNum(l.lbs-g):'0'):'–',g>0?(l.lbs-g>0.05?'lb to '+wNum(g):'At goal'):'No goal set')}</div>`:'';
+ const r=WRANGES.find(x=>x[0]==WR)||WRANGES[1],from=r[2]?addDays(T0,-r[2]):'',pts=a.filter(p=>p.d>=from);
+ const chart=!a.length?'<p class="mu" style="margin:0">No weigh-ins yet. Log your weight above and your trend shows up here.</p>'
+  :`<div class="seg wr">${WRANGES.map(([k,lab])=>`<button class="${WR==k?'on':''}" data-a="wRange" data-v="${k}">${lab}</button>`).join('')}</div>`+(pts.length?wChart(pts):'<p class="mu" style="margin:0">No weigh-ins in this range.</p>')+(a.length==1?'<p class="mu" style="margin:6px 0 0">Log another weigh-in to see your trend.</p>':'');
+ const rev=a.slice().reverse(),shown=WALL?rev:rev.slice(0,7);
+ const hist=a.length?`<div class="sec" style="margin-top:14px">History</div>${shown.map(w=>{const i=a.indexOf(w),p=a[i-1],df=p?w.lbs-p.lbs:0;return `<div class="wrow"><div class="wd"><b>${w.d==T0?'Today':w.d==addDays(T0,-1)?'Yesterday':md(w.d)}</b><span>${fmtDay(w.d)}</span></div>${p?`<span class="chip${df>0.05?' over':df<-0.05?' ok':''}">${wDiff(df)}</span>`:'<span class="chip">Start</span>'}<input type="number" inputmode="decimal" step="0.1" value="${wNum(w.lbs)}" data-a="wEdit" data-id="${esc(w.id)}" aria-label="Weight on ${fmtDay(w.d)}"><span class="unit">lb</span><button class="x" data-a="wDel" data-id="${esc(w.id)}" aria-label="Delete weigh-in on ${fmtDay(w.d)}">${ICX}</button></div>`}).join('')}${rev.length>7?`<button class="lnk" data-a="wAll">${WALL?'Show fewer':`Show all ${rev.length}`}</button>`:''}`:'';
+ return `<section class="card" style="--mc:var(--wt)"><div class="sec">Weight</div>${tiles}
+ <div class="wlog"><input id="wd" type="date" max="${T0}" value="${esc(WD)}" aria-label="Weigh-in date"><input id="wl" type="number" inputmode="decimal" step="0.1" placeholder="${l?wNum(l.lbs):'180'}" value="${esc(WL)}" aria-label="Weight in pounds"><span class="unit">lb</span><button class="btn" data-a="wLog">Log</button></div>
+ <div class="sflash${WFE?' err':''}" aria-live="polite" style="margin:6px 0 4px">${esc(WFL)}</div>
+ ${chart}${hist}</section>`}
+const CHD='<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
 function vGoal(){const p=S.prof,t=target(),inp=(id,k,ph)=>`<input id="${id}" type="number" inputmode="decimal" value="${esc(p[k])}" placeholder="${ph}" data-p="prof.${k}" data-t="n">`;
  const res=t?`<div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:wrap"><div class="tbig"><span class="mu">Eat about</span><b>${fmt(t.t)}</b><span class="mu">calories a day</span></div><span class="chip ${t.phase=='lose'?'over':'ok'}" style="margin-top:4px">${t.phase=='lose'?`Losing ${qs(Math.round(t.rate*10)/10)} lb a week`:'Maintaining'}</span></div><div style="margin-top:12px">${resLines(t)}</div>`
-  :'<p class="mu" style="margin:0">Some details are missing. Fill them in below to get your daily target.</p>';
+  :'<p class="mu" style="margin:0">Some details are missing. Fill them in under Your details to get your daily target.</p>';
  return `<h2 class="ph">Daily target</h2><section class="card">${res}</section>
- <section class="card form"><div class="sec">Your details</div>
+ ${wCard()}
+ <section class="card"><details class="dt" ${O.det?'open':''} data-o="det"><summary><span class="sec">Your details</span>${CHD}</summary><div class="form">
  <div class="fr"><label>Sex</label><div class="seg">${[['f','Female'],['m','Male']].map(([v,l])=>`<button class="${p.sex==v?'on':''}" data-a="prof" data-k="sex" data-v="${v}">${l}</button>`).join('')}</div></div>
  <div class="fr"><label for="pa">Age</label>${inp('pa','age','')}<span class="unit">years</span></div>
  <div class="fr"><label for="pft">Height</label>${inp('pft','ft','')}<span class="unit">ft</span>${inp('pin','inch','0')}<span class="unit">in</span></div>
@@ -602,8 +666,8 @@ function vGoal(){const p=S.prof,t=target(),inp=(id,k,ph)=>`<input id="${id}" typ
  <div class="fr"><label for="pg">Goal weight</label>${inp('pg','goal','')}<span class="unit">lb</span></div>
  <div class="fr col"><label>Activity</label>${actOpts(p.act,'prof')}</div>
  <div class="fr col"><label>Pace</label><div class="seg p4">${PACE.map(v=>`<button class="${num(p.pace)==v?'on':''}" data-a="prof" data-k="pace" data-v="${v}">${qs(v)} lb/wk</button>`).join('')}</div></div>
- <p class="mu" style="margin:0">Your target stays the same until you change something here. Update your current weight as you go; once it reaches your goal, the target switches to maintenance. Estimates use the Mifflin-St Jeor formula, so check with your doctor before a big change.</p>
- <button class="btn g bd" data-a="obStart">Answer the setup questions again</button></section>`}
+ <p class="mu" style="margin:0">Current weight follows your latest weigh-in, and your target updates with it. Once you reach your goal, the target switches to maintenance. Estimates use the Mifflin-St Jeor formula, so check with your doctor before a big change.</p>
+ <button class="btn g bd" data-a="obStart">Answer the setup questions again</button></div></details></section>`}
 
 // ---- First-run questionnaire (one question per screen) ----
 let OB=-1,OBE='';
@@ -674,7 +738,14 @@ function xForm(){return `<div class="xform"><input id="xn" type="text" placehold
  <div class="xprev" id="xp">${xPrev()}</div>
  <button class="btn wide" data-a="addX">Add exercise</button><div class="sflash${SFE?' err':''}" aria-live="polite">${esc(SFL)}</div>
  ${num(S.prof.lbs)?'':'<p class="mu" style="margin:0">Using 150 lb until you add your weight on the Goal tab.</p>'}</div>`}
-function vAdd(){const m=mealOf(SM),isX=SM=='x',kseg=`<div class="seg kseg">${[['f','Food',mealOf(isX?LM:SM).c],['x','Exercise',EX.c]].map(([v,l,c])=>`<button class="${(v=='x')==isX?'on':''}" style="--mc:${c}" data-a="kind" data-v="${v}">${l}</button>`).join('')}</div>`;
+function wForm(){const l=latestW(),T0=tdy();
+ return `<div class="xform"><div class="sec">Weight</div><div class="xin"><input id="wa" type="number" inputmode="decimal" step="0.1" placeholder="${l?wNum(l.lbs):'180'}" value="${esc(WL)}"><span class="mu" style="font-size:15px;font-weight:800">lb</span></div>
+ <button class="btn wide" data-a="wAdd">Log weight for ${D==T0?'today':fmtDay(D)}</button><div class="sflash${WFE?' err':''}" aria-live="polite">${esc(WFL)}</div>
+ <p class="mu" style="margin:0">${l?`Last weigh-in: ${wNum(l.lbs)} lb on ${fmtDay(l.d)}. `:''}Your latest weigh-in updates your daily target. See your trend on the Goal tab.</p>
+ <button class="btn g bd" data-a="tab" data-id="goal">Open Goal tab</button></div>`}
+function vAdd(){const m=mealOf(SM),isX=SM=='x',isW=SM=='w',kind=isW?'w':isX?'x':'f',kseg=`<div class="seg kseg">${[['f','Food',mealOf(isX||isW?LM:SM).c],['x','Exercise',EX.c],['w','Weight',WT.c]].map(([v,l,c])=>`<button class="${v==kind?'on':''}" style="--mc:${c}" data-a="kind" data-v="${v}">${l}</button>`).join('')}</div>`;
+ if(isW){const l=latestW();return `<section class="card form" style="--mc:${m.c}"><div class="shd"><div><b>Log weight</b><div class="mu">${dayLabel(D)} \u00b7 ${l?'Current '+wNum(l.lbs)+' lb':'No weigh-ins yet'}</div></div></div>
+ ${kseg}${wForm()}</section>`}
  if(isX)return `<section class="card form" style="--mc:${m.c}"><div class="shd"><div><b>Add exercise</b><div class="mu">${dayLabel(D)} \u00b7 ${fmt(burned(D))} cal burned so far</div></div></div>
  ${kseg}${xForm()}</section>`;
  return `<section class="card form" style="--mc:${m.c}"><div class="shd"><div><b>Add food</b><div class="mu">${dayLabel(D)} \u00b7 ${m.n} so far ${fmt(mealTot(D,SM))} cal</div></div></div>
@@ -685,7 +756,7 @@ function vAdd(){const m=mealOf(SM),isX=SM=='x',kseg=`<div class="seg kseg">${[['
  <section class="card" style="--mc:${m.c}"><div id="sl">${sheetList()}</div></section>`}
 // Open the Add tab, set to a meal (or exercise); the + button with no meal picks one by the time of day
 let XSUB=0;   // Exercise was picked from Food on the Add tab, so Back returns to Food
-function openAdd(k){XSUB=0;SM=k||defMeal();LM=SM=='x'?defMeal():SM;XN=XH='';XL=1;FN=FC='';Q=1;SFL='';SFE=0;if(T=='add'){R();scrollTo({top:0,behavior:'smooth'})}else goTab('add')}
+function openAdd(k){XSUB=0;SM=k||defMeal();LM=SM=='x'||SM=='w'?defMeal():SM;WL='';WFL='';WFE=0;XN=XH='';XL=1;FN=FC='';Q=1;SFL='';SFE=0;if(T=='add'){R();scrollTo({top:0,behavior:'smooth'})}else goTab('add')}
 // The DOM diff never overwrites the focused field, so clear the entry boxes directly
 function clearEntry(){FN='';FC='';Q=1;['#fn','#fc'].forEach(s=>{const e=$(s);if(e)e.value=''});const fq=$('#fq');if(fq)fq.value='1';const s=$('#fsave');if(s)s.checked=false}
 function sheetLog(n,cal,meta){const q=Q,name=q==1?n:`${n} (${qf(q)} servings)`,total=num(cal)*q,d=D,k=SM,it=logItem(d,k,n,total,1,Object.assign({},meta,{q,per:num(cal)}));
@@ -705,8 +776,9 @@ function parseBk(txt){let j=JSON.parse(txt);if(j&&j.app&&j.data)j=j.data;
   if(str(x.br))e.br=str(x.br);if(str(x.sz))e.sz=str(x.sz);if(num(x.amt)>0)e.amt=num(x.amt);if(str(x.u))e.u=str(x.u);if(num(x.q)>0)e.q=num(x.q);if(x.per!=null&&num(x.per)>=0)e.per=num(x.per);if(str(x.fid))e.fid=str(x.fid);return e},days={};
  const food=x=>{const e=entry('f')(x);if(e&&Array.isArray(x.parts))e.parts=x.parts.filter(obj).map(q=>({fid:String(q.fid||''),n:String(q.n??''),cal:Math.round(num(q.cal)),q:num(q.q)>0?num(q.q):1}));return e};
  for(const [d,x] of Object.entries(j.days)){if(!/^\d{4}-\d\d-\d\d$/.test(d)||!obj(x))continue;const o={};MEALS.forEach(m=>o[m.k]=Array.isArray(x[m.k])?x[m.k].map(entry('i')).filter(Boolean):[]);o.x=Array.isArray(x.x)?x.x.filter(obj).map(e=>({id:String(e.id||uid('x')),n:String(e.n??''),h:num(e.h),lvl:Math.min(2,Math.max(0,Math.floor(num(e.lvl)))),w:num(e.w),cal:Math.round(num(e.cal))})):[];if(num(x.t)>0)o.t=num(x.t);days[d]=o}
- const set=obj(j.set)?j.set:{},prof=obj(j.prof)?j.prof:{};
- return {v:Math.max(0,Math.floor(num(j.v))),set:{...set,theme:['system','daynight','light','dark'].includes(set.theme)?set.theme:'system',units:Array.isArray(set.units)?set.units.filter(u=>typeof u=='string'&&u.trim()).map(u=>u.trim()):UNITS.slice()},prof:{...BLANK(),...prof,sex:prof.sex=='m'?'m':'f'},foods:j.foods.map(food).filter(Boolean),days}}
+ const set=obj(j.set)?j.set:{},prof=obj(j.prof)?j.prof:{},wseen=new Set();
+ const wts=(Array.isArray(j.wts)?j.wts:[]).filter(w=>obj(w)&&/^\d{4}-\d\d-\d\d$/.test(w.d)&&num(w.lbs)>0&&!wseen.has(w.d)&&wseen.add(w.d)).map(w=>({id:String(w.id||uid('w')),d:w.d,lbs:Math.round(num(w.lbs)*10)/10}));
+ return {v:Math.max(0,Math.floor(num(j.v))),set:{...set,theme:['system','daynight','light','dark'].includes(set.theme)?set.theme:'system',units:Array.isArray(set.units)?set.units.filter(u=>typeof u=='string'&&u.trim()).map(u=>u.trim()):UNITS.slice()},prof:{...BLANK(),...prof,sex:prof.sex=='m'?'m':'f'},foods:j.foods.map(food).filter(Boolean),days,wts}}
 const bkErr=(e,what)=>toast(e=='newer'?'That backup is from a newer version of this app.':`That ${what} is not a calorie backup.`);
 function askRestore(j){if(!confirm('Replace everything on this device with this backup? This can’t be undone.'))return;S=j;migrate();RECC=null;flush();D=tdy();OB=S.set.onboarded?-1:0;R();toast('Backup restored')}
 const ACT={
@@ -753,7 +825,7 @@ const ACT={
  obNext:obNext, obBack:()=>{OBE='';OB=Math.max(0,OB-1);R()},
  obStart:()=>{OBSNAP={...S.prof};OB=0;OBE='';scrollTo(0,0);R()},
  obCancel:()=>{if(OBSNAP)S.prof=OBSNAP;OBSNAP=null;OB=-1;OBE='';snapTarget();save();R()},
- obDone:()=>{OBSNAP=null;S.set.onboarded=1;OB=-1;T='today';D=tdy();snapTarget();save();R();scrollTo(0,0);toast('Target set. Tap + to log your first food.')},
+ obDone:()=>{OBSNAP=null;S.set.onboarded=1;{const l=latestW(),w=num(S.prof.lbs);if(w>0&&(!l||l.lbs!=w))logWeight(tdy(),w)}OB=-1;T='today';D=tdy();snapTarget();save();R();scrollTo(0,0);toast('Target set. Tap + to log your first food.')},
  newRecipe:()=>{FE=null;RE={id:null,n:'',parts:[]};RQ='';RERR='';R();scrollTo(0,0);setTimeout(()=>$('#ren')?.focus(),80)},
  editRecipe:d=>{const f=S.foods[+d.i];if(!isRec(f))return;FE=null;RE={id:f.id,n:f.n,parts:f.parts.map(p=>({...p}))};RQ='';RERR='';R();scrollTo(0,0)},
  // Turn a meal's logged items into a recipe; items that match a saved food (same name and calories) stay linked to it
@@ -775,7 +847,7 @@ const ACT={
   RE=null;RERR='';save();R();scrollTo(0,0);toast(`Saved ${n} \u00b7 ${fmt(tot)} cal${ch?` \u00b7 updated ${ch} logged`:''}`)},
  reDel:()=>{const i=S.foods.findIndex(x=>x.id==RE.id);RE=null;RERR='';if(i<0){R();return}const [x]=S.foods.splice(i,1);save();R();scrollTo(0,0);toast(`Deleted “${x.n}”`,()=>{S.foods.splice(i,0,x);save();R()},'del')},
  reCancel:()=>{RE=null;RERR='';R();scrollTo(0,0)},
- kind:d=>{if(d.v=='x'){if(SM!='x'){LM=SM;XSUB=1}SM='x'}else{SM=LM||defMeal();XSUB=0}SFL='';SFE=0;R()},
+ kind:d=>{if(d.v=='x'||d.v=='w'){if(SM!='x'&&SM!='w'){LM=SM;XSUB=1}SM=d.v}else{SM=LM||defMeal();XSUB=0}SFL='';SFE=0;WFL='';WFE=0;R()},
  xq:d=>{XN=XN==d.v?'':d.v;R()},
  xl:d=>{XL=+d.v;R()},
  addX:()=>{const h=parseFloat(XH);if(!(h>0&&h<=24)){SFL='Enter how many hours, like 0.5 or 1.25.';SFE=1;R();$('#xh')?.focus();return}
@@ -784,6 +856,19 @@ const ACT={
  delX:d=>{const a=xItems(D),i=+d.i,[x]=a.splice(i,1),day=D;if(!x)return;save();R();toast(`Deleted “${x.n}”`,()=>{dayEnsure(day).x.splice(i,0,x);save();R()},'del')},
  xHrs:(d,el)=>{const x=xItems(D)[+d.i];if(!x)return;const h=parseFloat(el.value);if(!(h>0&&h<=24)){toast('Enter hours between 0 and 24.');el.value=x.h;return}x.h=h;x.cal=burn(h,num(x.lvl),x.w||xWeight());save();R()},
  xLvl:d=>{const x=xItems(D)[+d.i];if(!x)return;x.lvl=+d.v;x.cal=burn(x.h,x.lvl,x.w||xWeight());save();R()},
+ // Weight: log from the Goal tab (any past date) or the Add tab (the day being viewed)
+ wLog:()=>ACT.wSave(WD||tdy(),'#wl'),
+ wAdd:()=>ACT.wSave(D,'#wa'),
+ wSave:(d,sel)=>{const el=$(sel),raw=el?el.value.trim():WL.trim(),v=parseFloat(raw),[lo,hi,msg]=RANGE.lbs;
+  if(!d||d>tdy()){WFL='Pick a date that isn\u2019t in the future.';WFE=1;R();return}
+  if(!(v>=lo&&v<=hi)){WFL=raw?msg:'Enter your weight.';WFE=1;R();el?.focus();return}
+  const had=(S.wts||[]).some(w=>w.d==d),undo=logWeight(d,v);WL='';if(el)el.value='';
+  const when=d==tdy()?'today':fmtDay(d);WFL=`${had?'Updated':'Logged'} ${wNum(v)} lb for ${when}`;WFE=0;save();R();toast(`${had?'Updated':'Logged'} ${wNum(v)} lb \u00b7 ${when}`,undo)},
+ wEdit:(d,el)=>{const w=(S.wts||[]).find(x=>x.id==d.id);if(!w)return;const v=parseFloat(el.value),[lo,hi,msg]=RANGE.lbs;
+  if(!(v>=lo&&v<=hi)){toast(msg);el.value=wNum(w.lbs);return}const r=Math.round(v*10)/10;if(r==w.lbs)return;w.lbs=r;wSync();save();R()},
+ wDel:d=>{const a=S.wts||[],i=a.findIndex(x=>x.id==d.id);if(i<0)return;const [w]=a.splice(i,1);wSync();save();R();toast(`Deleted weigh-in for ${fmtDay(w.d)}`,()=>{S.wts.push(w);wSync();save();R()},'del')},
+ wRange:d=>{WR=d.v;R()},
+ wAll:()=>{WALL=WALL?0:1;R()},
  bkLater:()=>{S.set.bkSnooze=Date.now()-4*DAY_MS;save();R()},
  theme:d=>{S.set.theme=d.v;save();R()},
  share:shareData, export:exportData,
@@ -797,8 +882,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b
 document.addEventListener('change',e=>{const t=e.target,d=t.dataset;
  if(t.type=='checkbox'&&t.checked&&t.isConnected){t.classList.remove('pop');void t.offsetWidth;t.classList.add('pop');setTimeout(()=>t.classList.remove('pop'),320)}
  if(t.id=='fq'){t.value=qf(Q);return}if(d.p&&d.t)up(d.p,t.type=='checkbox'?t.checked:t.value,d.t,t);else if(d.a&&ACT[d.a])ACT[d.a](d,t)});
-document.addEventListener('input',e=>{const t=e.target;if(t.id=='fn'){FN=t.value;SFL='';patch($('#sl'),sheetList())}else if(t.id=='fc')FC=t.value;else if(t.id=='fq'){const v=parseFloat(t.value);if(v>0&&v<=50){Q=v;patch($('#sl'),sheetList())}}else if(t.id=='xn')XN=t.value;else if(t.id=='xh'){XH=t.value;patch($('#xp'),xPrev())}else if(t.matches('textarea.nm')){if(/\n/.test(t.value))t.value=t.value.replace(/\n+/g,' ');fit(t)}else if(t.id=='ren'){if(RE)RE.n=t.value}else if(FE&&t.id=='fen')FE.n=t.value;else if(FE&&t.id=='feb')FE.br=t.value;else if(FE&&t.id=='fec')FE.cal=t.value;else if(FE&&t.id=='fea')FE.amt=t.value;else if(FE&&t.id=='feu')FE.u=t.value;else if(t.id=='req'){RQ=t.value;patch($('#rel'),reList())}});
-document.addEventListener('keydown',e=>{const id=e.target.id;if(e.key=='Enter'&&e.target.classList&&e.target.classList.contains('qin')){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&id=='unew'){e.preventDefault();ACT.unitAdd()}else if(e.key=='Enter'&&/^fe[nbca]$/.test(id)){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&id=='ren'){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&id=='req'){e.preventDefault();const f=reMatches()[0];if(f)ACT.reAdd({id:f.id})}else if(e.key=='Enter'&&(id=='ron'||id=='roc')){e.preventDefault();ACT.reOne()}else if(e.key=='Enter'&&e.target.matches('textarea.nm')){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&(e.target.id=='xn'||e.target.id=='xh')){e.preventDefault();ACT.addX()}else if(e.key=='Enter'&&(e.target.id=='fn'||e.target.id=='fc')){e.preventDefault();ACT.addF()}else if(e.key=='Enter'&&e.target.closest('.obin')){e.preventDefault();obNext()}});
+document.addEventListener('input',e=>{const t=e.target;if(t.id=='fn'){FN=t.value;SFL='';patch($('#sl'),sheetList())}else if(t.id=='fc')FC=t.value;else if(t.id=='fq'){const v=parseFloat(t.value);if(v>0&&v<=50){Q=v;patch($('#sl'),sheetList())}}else if(t.id=='xn')XN=t.value;else if(t.id=='wl'||t.id=='wa')WL=t.value;else if(t.id=='wd')WD=t.value;else if(t.id=='xh'){XH=t.value;patch($('#xp'),xPrev())}else if(t.matches('textarea.nm')){if(/\n/.test(t.value))t.value=t.value.replace(/\n+/g,' ');fit(t)}else if(t.id=='ren'){if(RE)RE.n=t.value}else if(FE&&t.id=='fen')FE.n=t.value;else if(FE&&t.id=='feb')FE.br=t.value;else if(FE&&t.id=='fec')FE.cal=t.value;else if(FE&&t.id=='fea')FE.amt=t.value;else if(FE&&t.id=='feu')FE.u=t.value;else if(t.id=='req'){RQ=t.value;patch($('#rel'),reList())}});
+document.addEventListener('keydown',e=>{const id=e.target.id;if(e.key=='Enter'&&e.target.classList&&e.target.classList.contains('qin')){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&id=='unew'){e.preventDefault();ACT.unitAdd()}else if(e.key=='Enter'&&/^fe[nbca]$/.test(id)){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&id=='ren'){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&id=='req'){e.preventDefault();const f=reMatches()[0];if(f)ACT.reAdd({id:f.id})}else if(e.key=='Enter'&&(id=='ron'||id=='roc')){e.preventDefault();ACT.reOne()}else if(e.key=='Enter'&&e.target.matches('textarea.nm')){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&(e.target.id=='xn'||e.target.id=='xh')){e.preventDefault();ACT.addX()}else if(e.key=='Enter'&&id=='wl'){e.preventDefault();ACT.wLog()}else if(e.key=='Enter'&&id=='wa'){e.preventDefault();ACT.wAdd()}else if(e.key=='Enter'&&e.target.dataset&&e.target.dataset.a=='wEdit'){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&(e.target.id=='fn'||e.target.id=='fc')){e.preventDefault();ACT.addF()}else if(e.key=='Enter'&&e.target.closest('.obin')){e.preventDefault();obNext()}});
 document.addEventListener('toggle',e=>{const k=e.target.dataset&&e.target.dataset.o;if(k!=null)O[k]=e.target.open},true);
 
 // =====================================================================
@@ -830,28 +915,29 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S&&S.set.
 const ICON={today:'<path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M8 7c0-2 2-2 2-4M13 7c0-2 2-2 2-4"/>',week:'<path d="M4 20V11M10 20V5M16 20v-7M22 20H2"/>',foods:'<path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/>',goal:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/><path d="M12 3v2M21 12h-2"/>'};
 const TABS=[['today','Today',vToday],['week','Week',vWeek],['add','Add',vAdd],['foods','My foods',vFoods],['goal','Goal',vGoal]];
 const tabCols=id=>TC[id]||TC.today;
-let RK='';
+let RK='',LT='';
 function R(){applyTheme();if(D>tdy())D=tdy();
+ if(T!==LT){if(T=='goal'){O.det=0;WFL='';WFE=0;WALL=0}LT=T}   // Your details starts collapsed each time you open Goal
  const c=tabCols(OB>=0?'today':T);ROOT.style.setProperty('--pc',c[0]);ROOT.style.setProperty('--pc2',c[1]);
  document.body.classList.toggle('obm',OB>=0);
  if(OB>=0){const key='ob'+OB,full=key!==RK;RK=key;patch($('#app'),vOnboard(),full);if(full)setTimeout(()=>$('.obin input')?.focus(),60);navSync();return}
  const key=T+(T=='foods'&&RE?':re':T=='foods'&&FE?':fe':''),full=key!==RK;RK=key;patch($('#app'),(T=='more'?vMore:TABS.find(t=>t[0]==T)[2])(),full);
  $('#gear').classList.toggle('on',T=='more');
- const qi=TABS.findIndex(t=>t[0]=='add'),nb=t=>t[0]=='add'?`<button class="qab ${T=='add'?'on':''}"${T=='add'?' aria-current="page"':''} data-a="open" data-id="add" aria-label="Add food or exercise"><b>+</b><span>Add</span></button>`:`<button class="tb ${T==t[0]?'on':''}"${T==t[0]?' aria-current="page"':''} style="--tc:${tabCols(t[0])[0]}" data-a="tab" data-id="${t[0]}"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[t[0]]}</svg><span>${t[1]}</span></button>`;
+ const qi=TABS.findIndex(t=>t[0]=='add'),nb=t=>t[0]=='add'?`<button class="qab ${T=='add'?'on':''}"${T=='add'?' aria-current="page"':''} data-a="open" data-id="add" aria-label="Add food, exercise or weight"><b>+</b><span>Add</span></button>`:`<button class="tb ${T==t[0]?'on':''}"${T==t[0]?' aria-current="page"':''} style="--tc:${tabCols(t[0])[0]}" data-a="tab" data-id="${t[0]}"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[t[0]]}</svg><span>${t[1]}</span></button>`;
  patch($('#nav'),`<i class="hl" aria-hidden="true"></i><div class="nh">${TABS.slice(0,qi).map(nb).join('')}</div>${nb(TABS[qi])}<div class="nh">${TABS.slice(qi+1).map(nb).join('')}</div>`);
  placeHL(T);fitNames();navSync()}
 const APP=()=>$('#app');
 function slideIn(dir){const m=APP();m.style.transition='none';m.style.transform=`translate3d(${dir*Math.min(70,innerWidth*.15)}px,0,0)`;m.style.opacity='0';void m.offsetWidth;
  m.style.transition='transform .22s cubic-bezier(.16,1,.3,1),opacity .16s ease-out';m.style.transform='';m.style.opacity='';setTimeout(()=>{m.style.transition=''},240)}
-// Levels below Today: any other tab (or Settings) 1; a food or recipe editor and Add > Exercise add one;
+// Levels below Today: any other tab (or Settings) 1; a food or recipe editor and Add > Exercise or Weight add one;
 // the setup questions sit on top: one level per question answered, plus one when it was reopened from Goal (Cancel)
 function navDepth(){if(OB>=0)return (OBSNAP?1:0)+OB+(T=='today'?0:1);
- return (T=='today'?0:1)+(T=='foods'&&(RE||FE)?1:0)+(T=='add'&&SM=='x'&&XSUB?1:0)}
+ return (T=='today'?0:1)+(T=='foods'&&(RE||FE)?1:0)+(T=='add'&&(SM=='x'||SM=='w')&&XSUB?1:0)}
 function navUp(){if(OB>0)return ACT.obBack();
  if(OB==0){if(OBSNAP)ACT.obCancel();return}
  if(T=='foods'&&RE)return ACT.reCancel();
  if(T=='foods'&&FE)return ACT.feCancel();
- if(T=='add'&&SM=='x'&&XSUB)return ACT.kind({v:'f'});
+ if(T=='add'&&(SM=='x'||SM=='w')&&XSUB)return ACT.kind({v:'f'});
  if(T!='today')goTab('today')}
 // ---- Phone back button (the same block in Big Saucy Recipes, Diet and Budget) ----
 // Every open layer (a popup, an editor, a sub-view, any tab but the first) has one browser-history entry,
