@@ -295,6 +295,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .obtop>:first-child{justify-self:start;padding-left:0}.obtop>:last-child{justify-self:end;padding-right:0}
 .obbar{height:8px;border-radius:99px;background:var(--fld);overflow:hidden}
 .obbar i{display:block;height:100%;background:linear-gradient(90deg,var(--pc),var(--pc2));border-radius:99px;transition:width .35s cubic-bezier(.2,.8,.2,1)}
+.obskip{align-self:center;text-decoration:underline}
 .obq h2{font-size:27px;line-height:1.2}.obq p{margin:8px 0 0;font-size:15px}
 .obin{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .obin input{width:116px;flex:none;font:600 30px/1.1 var(--fd);text-align:center;padding:14px 10px}
@@ -670,14 +671,15 @@ function vGoal(){const p=S.prof,t=target(),inp=(id,k,ph)=>`<input id="${id}" typ
  <button class="btn g bd" data-a="obStart">Answer the setup questions again</button></div></details></section>`}
 
 // ---- First-run questionnaire (one question per screen) ----
-let OB=-1,OBE='';
+let OB=-1,OBE='',OBSI=0;   // OBSI: showing the sign-in screen instead of the questions (returning users)
 const obSteps=()=>['sex','age','height','weight','goal','act'].concat(num(S.prof.lbs)-num(S.prof.goal)>0.5?['pace']:[],['done']);
-function vOnboard(){const st=obSteps();if(OB>=st.length)OB=st.length-1;const k=st[OB],p=S.prof,n=st.length-1;
+function vOnboard(){if(OBSI)return vObSignIn();const st=obSteps();if(OB>=st.length)OB=st.length-1;const k=st[OB],p=S.prof,n=st.length-1;
  const q=(h,sub)=>`<div class="obq"><h2>${h}</h2>${sub?`<p class="mu">${sub}</p>`:''}</div>`;
  const box=(id,key,ph,unit,mode)=>`<input id="${id}" type="number" inputmode="${mode||'decimal'}" value="${esc(p[key])}" placeholder="${ph}"><span>${unit}</span>`;
  const next=`<div class="sflash err" aria-live="polite">${esc(OBE)}</div><button class="btn wide" data-a="obNext">Next</button>`;
  let b='';
- if(k=='sex')b=q('Welcome! Let\u2019s set your daily calorie target.','A few quick questions. First, which sex should the calorie formula use?')+`<div class="opts two">${[['f','Female'],['m','Male']].map(([v,l])=>`<button class="opt ${p.sex==v?'on':''}" data-a="obPick" data-k="sex" data-v="${v}"><b>${l}</b></button>`).join('')}</div>`;
+ if(k=='sex')b=q('Welcome! Let\u2019s set your daily calorie target.','A few quick questions. First, which sex should the calorie formula use?')+`<div class="opts two">${[['f','Female'],['m','Male']].map(([v,l])=>`<button class="opt ${p.sex==v?'on':''}" data-a="obPick" data-k="sex" data-v="${v}"><b>${l}</b></button>`).join('')}</div>`
+  +(S.set.onboarded?'':'<button class="lnk obskip" data-a="obSignIn">Already use Big Skinny? Skip setup and sign in</button>');
  else if(k=='age')b=q('How old are you?')+`<div class="obin">${box('oa','age','30','years','numeric')}</div>`+next;
  else if(k=='height')b=q('How tall are you?')+`<div class="obin">${box('oft','ft','5','ft','numeric')}${box('oin','inch','6','in','numeric')}</div>`+next;
  else if(k=='weight')b=q('What do you weigh now?','You can update this any time on the Goal tab.')+`<div class="obin">${box('olb','lbs','180','lb')}</div>`+next;
@@ -692,6 +694,15 @@ const OBCHK={age:[['oa','age']],height:[['oft','ft'],['oin','inch']],weight:[['o
 function obNext(){const k=obSteps()[OB],vals=[];
  for(const [id,key] of OBCHK[k]||[]){const el=$('#'+id),raw=el?el.value.trim():'',v=raw===''&&key=='inch'?0:parseFloat(raw),[lo,hi,msg]=RANGE[key];if(!(v>=lo&&v<=hi)){OBE=msg;R();$('#'+id)?.focus();return}vals.push([key,v])}
  vals.forEach(([key,v])=>S.prof[key]=v);OBE='';OB++;save();R()}
+// Returning users: skip the questions and bring their data back by signing in to sync or importing a backup.
+// Either one runs through apply()/askRestore(), which close setup once the incoming data has a target.
+function vObSignIn(){
+ return `<div class="ob"><div class="obtop"><button class="lnk bkb" data-a="obSignBack">\u2039 Back</button><span class="mu">Welcome back</span><span></span></div>
+ <div class="obq"><h2>Pick up where you left off</h2><p class="mu">Sign in to bring your log, foods and target back to this device.</p></div>
+ ${window.CloudSync?CloudSync.view():''}
+ <section class="card"><h2>Restore a backup</h2><p class="mu" style="margin:0">Not using sync? Import a backup file you saved from Settings.</p>
+ <div class="btns"><button class="btn g bd" data-a="pickFile">Import backup file</button></div><input type="file" id="bkf" accept=".json,application/json,text/plain" hidden data-a="importFile"></section>
+ <button class="lnk" data-a="obSignBack">New here? Answer the setup questions instead</button></div>`}
 // Re-running setup works on the live profile; keep a copy so Cancel can put it back
 let OBSNAP=null;
 
@@ -823,6 +834,7 @@ const ACT={
  prof:d=>{S.prof[d.k]=d.k=='sex'?d.v:num(d.v);snapTarget();save();R()},
  obPick:d=>{S.prof[d.k]=d.k=='sex'?d.v:num(d.v);OBE='';OB++;save();R()},
  obNext:obNext, obBack:()=>{OBE='';OB=Math.max(0,OB-1);R()},
+ obSignIn:()=>{OBSI=1;OBE='';scrollTo(0,0);R()}, obSignBack:()=>{OBSI=0;scrollTo(0,0);R()},
  obStart:()=>{OBSNAP={...S.prof};OB=0;OBE='';scrollTo(0,0);R()},
  obCancel:()=>{if(OBSNAP)S.prof=OBSNAP;OBSNAP=null;OB=-1;OBE='';snapTarget();save();R()},
  obDone:()=>{OBSNAP=null;S.set.onboarded=1;{const l=latestW(),w=num(S.prof.lbs);if(w>0&&(!l||l.lbs!=w))logWeight(tdy(),w)}OB=-1;T='today';D=tdy();snapTarget();save();R();scrollTo(0,0);toast('Target set. Tap + to log your first food.')},
@@ -920,7 +932,8 @@ function R(){applyTheme();if(D>tdy())D=tdy();
  if(T!==LT){if(T=='goal'){O.det=0;WFL='';WFE=0;WALL=0}LT=T}   // Your details starts collapsed each time you open Goal
  const c=tabCols(OB>=0?'today':T);ROOT.style.setProperty('--pc',c[0]);ROOT.style.setProperty('--pc2',c[1]);
  document.body.classList.toggle('obm',OB>=0);
- if(OB>=0){const key='ob'+OB,full=key!==RK;RK=key;patch($('#app'),vOnboard(),full);if(full)setTimeout(()=>$('.obin input')?.focus(),60);navSync();return}
+ if(OB<0)OBSI=0;
+ if(OB>=0){const key='ob'+OB+(OBSI?'s':''),full=key!==RK;RK=key;patch($('#app'),vOnboard(),full);if(full&&!OBSI)setTimeout(()=>$('.obin input')?.focus(),60);navSync();return}
  const key=T+(T=='foods'&&RE?':re':T=='foods'&&FE?':fe':''),full=key!==RK;RK=key;patch($('#app'),(T=='more'?vMore:TABS.find(t=>t[0]==T)[2])(),full);
  $('#gear').classList.toggle('on',T=='more');
  const qi=TABS.findIndex(t=>t[0]=='add'),nb=t=>t[0]=='add'?`<button class="qab ${T=='add'?'on':''}"${T=='add'?' aria-current="page"':''} data-a="open" data-id="add" aria-label="Add food, exercise or weight"><b>+</b><span>Add</span></button>`:`<button class="tb ${T==t[0]?'on':''}"${T==t[0]?' aria-current="page"':''} style="--tc:${tabCols(t[0])[0]}" data-a="tab" data-id="${t[0]}"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[t[0]]}</svg><span>${t[1]}</span></button>`;
@@ -931,9 +944,10 @@ function slideIn(dir){const m=APP();m.style.transition='none';m.style.transform=
  m.style.transition='transform .22s cubic-bezier(.16,1,.3,1),opacity .16s ease-out';m.style.transform='';m.style.opacity='';setTimeout(()=>{m.style.transition=''},240)}
 // Levels below Today: any other tab (or Settings) 1; a food or recipe editor and Add > Exercise or Weight add one;
 // the setup questions sit on top: one level per question answered, plus one when it was reopened from Goal (Cancel)
-function navDepth(){if(OB>=0)return (OBSNAP?1:0)+OB+(T=='today'?0:1);
+function navDepth(){if(OB>=0)return (OBSNAP?1:0)+OB+(OBSI?1:0)+(T=='today'?0:1);
  return (T=='today'?0:1)+(T=='foods'&&(RE||FE)?1:0)+(T=='add'&&(SM=='x'||SM=='w')&&XSUB?1:0)}
-function navUp(){if(OB>0)return ACT.obBack();
+function navUp(){if(OBSI)return ACT.obSignBack();
+ if(OB>0)return ACT.obBack();
  if(OB==0){if(OBSNAP)ACT.obCancel();return}
  if(T=='foods'&&RE)return ACT.reCancel();
  if(T=='foods'&&FE)return ACT.feCancel();
