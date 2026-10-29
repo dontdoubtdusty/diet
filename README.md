@@ -1,6 +1,6 @@
 # Big Skinny Health
 
-A simple calorie tracker that runs in your browser. It's part of the Big apps, alongside [Big Saucy Recipes](https://github.com/dontdoubtdusty/cooking) and [Big Minty Finances](https://github.com/dontdoubtdusty/budget). It's one file (`index.html`) with no build step and no server.
+A simple calorie tracker that runs in your browser. It's part of the Big apps, alongside [Big Minty Finances](https://github.com/dontdoubtdusty/budget), [Big Saucy Recipes](https://github.com/dontdoubtdusty/cooking), [Big Tidy Reminders](https://github.com/dontdoubtdusty/reminders) and [Big Shiny Rounds](https://github.com/dontdoubtdusty/cleaning). It's one file (`index.html`) with no build step and no server.
 
 ## Features
 
