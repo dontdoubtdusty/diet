@@ -260,6 +260,10 @@ nav .tb.on{color:var(--tc)}
 .step .qin{width:46px;flex:none;text-align:center;padding:4px 2px;border-radius:10px;background:transparent;font-weight:800}
 .ed .step .qin{width:40px;padding:2px}
 .step.sm{padding:2px}.step.sm button{width:28px;height:28px;font-size:16px}
+/* Weight box on a logged food that was weighed: the amount plus its unit, no - and + */
+.ed .wstep{padding:2px 12px 2px 4px;min-height:32px}.ed .wstep .qin{width:52px}.wu{font-size:13px;font-weight:800;color:var(--mu)}
+/* Weigh panel on the Add tab: weight box with a g / oz switch */
+.wgr{display:flex;align-items:center;gap:10px}.wgr .seg{flex:1;max-width:160px}
 .iqr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 4px 6px}
 .iqr .isub{padding:0;margin:0}
 .sv{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:14px;font-weight:700;color:var(--mu);cursor:pointer}
@@ -383,6 +387,7 @@ const qs=q=>Number.isInteger(q)?String(q):q.toFixed(1);
 // 3. STATE: seed, migrations, load/save
 // =====================================================================
 let S,T='today',D=tdy(),O={},SM='b',LM='b',XN='',XH='',XL=1,FN='',FC='',Q=1,SFL='',SFE=0;
+let WG=null;   // UI-only: the food being weighed on the Add tab {n, cal, meta, s: its weight serving, u: 'g'|'oz', w: typed weight}
 const BLANK=()=>({sex:'f',age:'',ft:'',inch:'',lbs:'',goal:'',act:1.375,pace:1});
 const seed=()=>({v:0,set:{theme:'system'},prof:BLANK(),foods:FOODS.map(([n,cal])=>({id:uid('f'),n,cal})),days:{},wts:[]});
 // To change the data shape later, ADD a function to the end of this list; never edit an old one.
@@ -508,6 +513,12 @@ const sizeTxt=f=>[num(f.amt)>0?qf(f.amt):'',(f.u||'').trim()].filter(Boolean).jo
 const foodSub=f=>[(f.br||'').trim(),f.sz||sizeTxt(f)].filter(Boolean).join(' \u00b7 ');
 const metaOf=f=>({br:(f.br||'').trim(),sz:f.sz||sizeTxt(f)});
 function newFoodObj(n,cal,br,sz){const f={id:uid('f'),n,cal:Math.round(num(cal))};if(br)f.br=br;const m=/^\s*([\d.]+)\s*(.*)$/.exec(sz||'');if(m&&num(m[1])>0){f.amt=num(m[1]);if(m[2].trim())f.u=m[2].trim()}else if((sz||'').trim())f.u=sz.trim();return f}
+// Weight servings: a food whose serving size is in grams or ounces can be logged by weight.
+// Returns {amt, u:'g'|'oz', g: grams in one serving}, or null when the serving isn't a weight.
+const OZ_G=28.3495,WUNIT={g:'g',gram:'g',grams:'g',oz:'oz',ounce:'oz',ounces:'oz'};
+function wtOf(f){if(!f||isRec(f))return null;let a=num(f.amt),u=f.u;
+ if(!(a>0)){const m=/^\s*([\d.]+)\s*(.*)$/.exec(f.sz||'');if(!m)return null;a=num(m[1]);u=m[2]}
+ u=WUNIT[(u||'').trim().toLowerCase()];return a>0&&u?{amt:a,u,g:a*(u=='oz'?OZ_G:1)}:null}
 const subLine=f=>{const t=foodSub(f);return t?`<small class="rsub">${esc(t)}</small>`:''};
 // Recipes: a saved food with parts [{fid, n, cal, q}]. fid links to a saved food (its name and calories stay live);
 // n and cal are a copy, so a part keeps working as a one-off if that food is deleted. Recipes can't contain recipes.
@@ -541,7 +552,7 @@ function ring(eaten,t){const R0=42,C=2*Math.PI*R0,p=t?Math.min(1,eaten/t):0,over
  return `<svg class="ring" viewBox="0 0 100 100" role="img" aria-label="${t?fmt(v)+(over?' calories over':' calories left'):fmt(eaten)+' calories eaten'}"><circle cx="50" cy="50" r="${R0}" class="rt"/><circle cx="50" cy="50" r="${R0}" class="ra${over?' over':''}" stroke-dasharray="${(p*C).toFixed(2)} ${C.toFixed(2)}" transform="rotate(-90 50 50)"/><text x="50" y="54" class="rn">${fmt(v)}</text><text x="50" y="66" class="rl">${t?(over?'CAL OVER':'CAL LEFT'):'CAL EATEN'}</text></svg>`}
 function mealCard(m){const it=items(D,m.k),y=items(addDays(D,-1),m.k),p=`days.${D}.${m.k}`;
  return `<section class="card meal" data-k="${m.k}" style="--mc:${m.c}"><div class="mh"><span class="md"></span><h3>${m.n}</h3><span class="mt">${fmt(mealTot(D,m.k))} <small>cal</small></span><button class="addm" data-a="open" data-m="${m.k}" aria-label="Add food to ${m.n}">+</button></div>`
- +(it.length?`<div class="items">${it.map((x,i)=>{const sv=inFoods(baseFood(x).n,x.br)||!!(x.fid&&S.foods.some(f=>f.id==x.fid)),q=iq(x),sub=[q==1?'serving':'servings',qtyTxt(x),(x.br||'').trim()].filter(Boolean).join(' \u00b7 '),dm=`data-m="${m.k}" data-i="${i}"`;return `<div class="row ed it" data-m="${m.k}" data-i="${i}"><span class="grip" title="Drag to another meal">${ICG}</span><div class="nmc">${nameBox(x.n,`${p}.${i}.n`,'Food')}<div class="iqr"><div class="step sm"><button data-a="iQ" ${dm} data-n="-0.5" aria-label="Fewer servings of ${esc(x.n)}">\u2212</button><input type="number" class="qin" inputmode="decimal" step="any" value="${qf(q)}" data-a="iQs" ${dm} aria-label="Servings of ${esc(x.n)}"><button data-a="iQ" ${dm} data-n="0.5" aria-label="More servings of ${esc(x.n)}">+</button></div><small class="isub">${esc(sub)}</small></div></div><input type="number" class="a" inputmode="numeric" value="${esc(x.cal)}" data-a="iCal" ${dm} aria-label="Total calories"><button class="x sv${sv?' saved':''}" data-a="saveItem" data-m="${m.k}" data-i="${i}" aria-label="${sv?esc(x.n)+' is in My foods':'Save '+esc(x.n)+' to My foods'}">${ICB(sv)}</button><button class="x" data-a="delItem" data-m="${m.k}" data-i="${i}" aria-label="Delete ${esc(x.n)}">${ICX}</button></div>`}).join('')}</div>${it.length>1?`<button class="lnk mkr" data-a="mealRecipe" data-m="${m.k}">Save these ${it.length} as a recipe</button>`:''}`
+ +(it.length?`<div class="items">${it.map((x,i)=>{const sv=inFoods(baseFood(x).n,x.br)||!!(x.fid&&S.foods.some(f=>f.id==x.fid)),q=iq(x),ws=wtOf(x),sub=(ws?[]:[q==1?'serving':'servings',qtyTxt(x)]).concat((x.br||'').trim()).filter(Boolean).join(' \u00b7 '),dm=`data-m="${m.k}" data-i="${i}"`;return `<div class="row ed it" data-m="${m.k}" data-i="${i}"><span class="grip" title="Drag to another meal">${ICG}</span><div class="nmc">${nameBox(x.n,`${p}.${i}.n`,'Food')}<div class="iqr">${ws?`<div class="step sm wstep"><input type="number" class="qin" inputmode="decimal" step="any" value="${qf(ws.amt*q)}" data-a="iW" ${dm} aria-label="Weight of ${esc(x.n)} in ${ws.u}"><span class="wu">${ws.u}</span></div>`:`<div class="step sm"><button data-a="iQ" ${dm} data-n="-0.5" aria-label="Fewer servings of ${esc(x.n)}">\u2212</button><input type="number" class="qin" inputmode="decimal" step="any" value="${qf(q)}" data-a="iQs" ${dm} aria-label="Servings of ${esc(x.n)}"><button data-a="iQ" ${dm} data-n="0.5" aria-label="More servings of ${esc(x.n)}">+</button></div>`}<small class="isub">${esc(sub)}</small></div></div><input type="number" class="a" inputmode="numeric" value="${esc(x.cal)}" data-a="iCal" ${dm} aria-label="Total calories"><button class="x sv${sv?' saved':''}" data-a="saveItem" data-m="${m.k}" data-i="${i}" aria-label="${sv?esc(x.n)+' is in My foods':'Save '+esc(x.n)+' to My foods'}">${ICB(sv)}</button><button class="x" data-a="delItem" data-m="${m.k}" data-i="${i}" aria-label="Delete ${esc(x.n)}">${ICX}</button></div>`}).join('')}</div>${it.length>1?`<button class="lnk mkr" data-a="mealRecipe" data-m="${m.k}">Save these ${it.length} as a recipe</button>`:''}`
  :`<div class="empty">${y.length?`<button class="copy" data-a="copyY" data-m="${m.k}">Copy yesterday's ${m.n.toLowerCase()} \u00b7 ${y.length} item${y.length==1?'':'s'}, ${fmt(sum(y,x=>num(x.cal)))} cal</button>`:`<button class="ghost" data-a="open" data-m="${m.k}">Nothing yet. Tap to add.</button>`}</div>`)+`</section>`}
 function exCard(){const xs=xItems(D),p=`days.${D}.x`;
  return `<section class="card exc" style="--mc:var(--ex)"><div class="mh"><span class="md"></span><h3>Exercise</h3><span class="mt">${xs.length?'\u2212':''}${fmt(burned(D))} <small>cal</small></span><button class="addm" data-a="open" data-m="x" aria-label="Add exercise">+</button></div>`
@@ -588,7 +599,8 @@ function vFood(){const units=S.set.units||[],cur=(FE.u||'').trim(),opts=['',...u
  <label class="fl"><span class="sec">Name</span><input id="fen" type="text" placeholder="Like Peanut butter" autocomplete="off" value="${esc(FE.n)}"></label>
  <label class="fl"><span class="sec">Brand <i>(optional)</i></span><input id="feb" type="text" placeholder="Like Jif" autocomplete="off" value="${esc(FE.br)}"></label>
  <label class="fl"><span class="sec">Calories per serving</span><input id="fec" type="number" inputmode="numeric" placeholder="190" value="${esc(FE.cal)}" style="width:120px"></label>
- <div class="fl"><span class="sec">Serving size <i>(optional, just a reminder)</i></span><div class="szr"><input id="fea" type="number" inputmode="decimal" step="any" placeholder="2" value="${esc(FE.amt)}" aria-label="Serving amount"><select id="feu" aria-label="Serving unit">${opts.map(u=>`<option value="${esc(u)}"${u==cur?' selected':''}>${u?esc(u):'No unit'}</option>`).join('')}</select></div>
+ <div class="fl"><span class="sec">Serving size <i>(optional)</i></span><div class="szr"><input id="fea" type="number" inputmode="decimal" step="any" placeholder="2" value="${esc(FE.amt)}" aria-label="Serving amount"><select id="feu" aria-label="Serving unit">${opts.map(u=>`<option value="${esc(u)}"${u==cur?' selected':''}>${u?esc(u):'No unit'}</option>`).join('')}</select></div>
+ <p class="mu" style="margin:0">Use g or oz, like 100 g, to log this food by weight.</p>
  <button class="lnk" data-a="unitsToggle" style="align-self:flex-start;padding-left:0">${UE?'Done editing units':'Edit unit list'}</button>
  ${UE?`<div class="ued"><div class="uchips">${units.length?units.map((u,i)=>`<span class="uchip">${esc(u)}<button data-a="unitDel" data-i="${i}" aria-label="Remove ${esc(u)}">${ICX}</button></span>`).join(''):'<span class="mu">No units yet.</span>'}</div><div class="row"><input id="unew" type="text" placeholder="Add a unit, like jar" autocomplete="off"><button class="btn g bd" data-a="unitAdd">Add</button></div></div>`:''}
  </div></section>
@@ -727,7 +739,7 @@ function matches(){const q=FN.trim().toLowerCase(),hit=f=>!q||((f.n||'')+' '+(f.
  top=(SM=='x'?[]:frequent(SM)).filter(e=>hit(e.f)),tid=new Set(top.filter(e=>e.sv).map(e=>e.f.id)),tk=new Set(top.map(e=>fkey(e.f.n,e.f.br))),
  saved=S.foods.map((f,i)=>({...f,i})).filter(f=>hit(f)&&!tid.has(f.id)&&!tk.has(fkey(f.n,f.br)));
  return {top,saved,rec:recentAll().filter(f=>hit(f)&&!tk.has(fkey(f.n,f.br))).slice(0,8)}}
-function sheetList(){const {top,saved,rec}=matches(),fi=(src,i,f,sv)=>`<div class="fi"><button class="fb" data-a="pick" data-src="${src}" data-i="${i}"><span class="fn">${esc(f.n)}${isRec(f)?`<small class="rsub"><span class="rtag">Recipe</span>${esc(partsTxt(f))}</small>`:subLine(f)}</span><span class="fc">${fmt(num(f.cal)*Q)} cal</span><span class="pl" aria-hidden="true">+</span></button>${sv?`<button class="fsv" data-a="saveRec" data-src="${src}" data-i="${i}">Save</button>`:''}</div>`;
+function sheetList(){const {top,saved,rec}=matches(),fi=(src,i,f,sv)=>`<div class="fi"><button class="fb" data-a="pick" data-src="${src}" data-i="${i}"><span class="fn">${esc(f.n)}${isRec(f)?`<small class="rsub"><span class="rtag">Recipe</span>${esc(partsTxt(f))}</small>`:subLine(f)}</span><span class="fc">${fmt(num(f.cal)*(wtOf(f)?1:Q))} cal</span><span class="pl" aria-hidden="true">+</span></button>${sv?`<button class="fsv" data-a="saveRec" data-src="${src}" data-i="${i}">Save</button>`:''}</div>`;
  return (top.length?`<div class="sec">Frequent at ${mealOf(SM).n}</div>${top.map((e,i)=>fi('t',i,e.f,!e.sv)).join('')}`:'')
  +(saved.length?`<div class="sec"${top.length?' style="margin-top:10px"':''}>My foods</div>${saved.map((f,i)=>fi('s',i,f)).join('')}`:'')+(rec.length?`<div class="sec" style="margin-top:10px">Recent</div>${rec.map((f,i)=>fi('r',i,f,1)).join('')}`:'')
  +(!top.length&&!saved.length&&!rec.length?`<p class="mu">${FN.trim()?'No saved foods match. Enter the calories above and tap Add.':'Foods you save will show up here.'}</p>`:'')}
@@ -744,6 +756,16 @@ function wForm(){const l=latestW(),T0=tdy();
  <button class="btn wide" data-a="wAdd">Log weight for ${D==T0?'today':fmtDay(D)}</button><div class="sflash${WFE?' err':''}" aria-live="polite">${esc(WFL)}</div>
  <p class="mu" style="margin:0">${l?`Last weigh-in: ${wNum(l.lbs)} lb on ${fmtDay(l.d)}. `:''}Your latest weigh-in updates your daily target. See your trend on the Goal tab.</p>
  <button class="btn g bd" data-a="tab" data-id="goal">Open Goal tab</button></div>`}
+// ---- Weigh panel: shown in place of the servings row after picking a food whose serving is in g or oz ----
+const wgGrams=()=>(parseFloat(WG.w)||0)*(WG.u=='oz'?OZ_G:1);
+const wgCal=()=>num(WG.cal)*wgGrams()/WG.s.g;
+function wgPrev(){const g=wgGrams();return g>0&&g<=5000?`<b>${fmt(wgCal())}</b>calories`:`<b>–</b>Enter the weight to see calories`}
+function wgForm(m){const s=WG.s;
+ return `<div class="xform"><p class="mu" style="margin:0"><b style="color:var(--tx)">${esc(WG.n)}</b> · ${fmt(WG.cal)} cal per ${qf(s.amt)} ${s.u}</p>
+ <div class="sec">How much</div><div class="wgr"><div class="xin"><input id="wgw" type="number" inputmode="decimal" step="any" min="0" placeholder="${WG.u=='oz'?'4':'120'}" value="${esc(WG.w)}" aria-label="Weight in ${WG.u=='oz'?'ounces':'grams'}"></div>
+ <div class="seg">${['g','oz'].map(u=>`<button class="${WG.u==u?'on':''}" data-a="wgU" data-v="${u}">${u}</button>`).join('')}</div></div>
+ <div class="xprev" id="wgp">${wgPrev()}</div>
+ <button class="btn wide" data-a="wgAdd">Add to ${m.n}</button><button class="btn g bd" data-a="wgCancel">Cancel</button></div>`}
 function vAdd(){const m=mealOf(SM),isX=SM=='x',isW=SM=='w',kind=isW?'w':isX?'x':'f',kseg=`<div class="seg kseg">${[['f','Food',mealOf(isX||isW?LM:SM).c],['x','Exercise',EX.c],['w','Weight',WT.c]].map(([v,l,c])=>`<button class="${v==kind?'on':''}" style="--mc:${c}" data-a="kind" data-v="${v}">${l}</button>`).join('')}</div>`;
  if(isW){const l=latestW();return `<section class="card form" style="--mc:${m.c}"><div class="shd"><div><b>Log weight</b><div class="mu">${dayLabel(D)} \u00b7 ${l?'Current '+wNum(l.lbs)+' lb':'No weigh-ins yet'}</div></div></div>
  ${kseg}${wForm()}</section>`}
@@ -751,13 +773,13 @@ function vAdd(){const m=mealOf(SM),isX=SM=='x',isW=SM=='w',kind=isW?'w':isX?'x':
  ${kseg}${xForm()}</section>`;
  return `<section class="card form" style="--mc:${m.c}"><div class="shd"><div><b>Add food</b><div class="mu">${dayLabel(D)} \u00b7 ${m.n} so far ${fmt(mealTot(D,SM))} cal</div></div></div>
  ${kseg}<div class="seg mseg">${MEALS.map(x=>`<button class="${SM==x.k?'on':''}" style="--mc:${x.c}" data-a="sm" data-m="${x.k}">${x.n}</button>`).join('')}</div>
- <div class="row"><input id="fn" type="text" placeholder="Type a food, or tap one below" autocomplete="off" value="${esc(FN)}"><input id="fc" class="a" type="number" inputmode="numeric" placeholder="Cal" value="${esc(FC)}"></div>
+ ${WG?wgForm(m):`<div class="row"><input id="fn" type="text" placeholder="Type a food, or tap one below" autocomplete="off" value="${esc(FN)}"><input id="fc" class="a" type="number" inputmode="numeric" placeholder="Cal" value="${esc(FC)}"></div>
  <div class="row"><span class="mu">Servings</span><div class="step"><button data-a="q" data-n="-0.5" aria-label="Fewer servings">\u2212</button><input id="fq" class="qin" type="number" inputmode="decimal" step="any" value="${qf(Q)}" aria-label="Servings"><button data-a="q" data-n="0.5" aria-label="More servings">+</button></div><label class="sv"><input type="checkbox" id="fsave"> Save to My foods</label></div>
- <button class="btn wide" data-a="addF">Add to ${m.n}</button><div class="sflash${SFE?' err':''}" aria-live="polite">${esc(SFL)}</div></section>
+ <button class="btn wide" data-a="addF">Add to ${m.n}</button>`}<div class="sflash${SFE?' err':''}" aria-live="polite">${esc(SFL)}</div></section>
  <section class="card" style="--mc:${m.c}"><div id="sl">${sheetList()}</div></section>`}
 // Open the Add tab, set to a meal (or exercise); the + button with no meal picks one by the time of day
 let XSUB=0;   // Exercise was picked from Food on the Add tab, so Back returns to Food
-function openAdd(k){XSUB=0;SM=k||defMeal();LM=SM=='x'||SM=='w'?defMeal():SM;WL='';WFL='';WFE=0;XN=XH='';XL=1;FN=FC='';Q=1;SFL='';SFE=0;if(T=='add'){R();scrollTo({top:0,behavior:'smooth'})}else goTab('add')}
+function openAdd(k){XSUB=0;WG=null;SM=k||defMeal();LM=SM=='x'||SM=='w'?defMeal():SM;WL='';WFL='';WFE=0;XN=XH='';XL=1;FN=FC='';Q=1;SFL='';SFE=0;if(T=='add'){R();scrollTo({top:0,behavior:'smooth'})}else goTab('add')}
 // The DOM diff never overwrites the focused field, so clear the entry boxes directly
 function clearEntry(){FN='';FC='';Q=1;['#fn','#fc'].forEach(s=>{const e=$(s);if(e)e.value=''});const fq=$('#fq');if(fq)fq.value='1';const s=$('#fsave');if(s)s.checked=false}
 function sheetLog(n,cal,meta){const q=Q,name=q==1?n:`${n} (${qf(q)} servings)`,total=num(cal)*q,d=D,k=SM,it=logItem(d,k,n,total,1,Object.assign({},meta,{q,per:num(cal)}));
@@ -797,7 +819,20 @@ const ACT={
   if(!(c>0)){const m=n&&S.foods.find(f=>f.n.toLowerCase()==n.toLowerCase());if(m){sheetLog(m.n,m.cal,{...(isRec(m)?{}:metaOf(m)),fid:m.id});return}SFL='Enter the calories for one serving.';SFE=1;R();$('#fc')?.focus();return}
   let fid='';if($('#fsave')?.checked&&n&&!S.foods.some(f=>f.n.toLowerCase()==n.toLowerCase())){fid=uid('f');S.foods.unshift({id:fid,n,cal:Math.round(c)})}
   sheetLog(n||'Food',c,fid?{fid}:null)},
- pick:d=>{const {top,saved,rec}=matches(),e=d.src=='t'&&top[+d.i],f=e?e.f:(d.src=='s'?saved:rec)[+d.i],sv=e?e.sv:d.src=='s';if(f)sheetLog(f.n,f.cal,{...(isRec(f)?{}:metaOf(f)),fid:sv?f.id:''})},
+ pick:d=>{const {top,saved,rec}=matches(),e=d.src=='t'&&top[+d.i],f=e?e.f:(d.src=='s'?saved:rec)[+d.i],sv=e?e.sv:d.src=='s';if(!f)return;
+  // A food measured in g or oz opens the weigh panel instead of logging straight away
+  const s=wtOf(f);if(s){WG={n:f.n,cal:num(f.cal),meta:{...metaOf(f),fid:sv?f.id:''},s,u:s.u,w:''};SFL='';SFE=0;R();scrollTo({top:0,behavior:'smooth'});setTimeout(()=>$('#wgw')?.focus(),80);return}
+  sheetLog(f.n,f.cal,{...(isRec(f)?{}:metaOf(f)),fid:sv?f.id:''})},
+ // Weigh panel: say whether the number is g or oz (what's typed stays), log the weight as servings, or go back to the list
+ wgU:d=>{if(!WG||WG.u==d.v)return;WG.u=d.v;R();$('#wgw')?.focus()},
+ wgAdd:()=>{if(!WG)return;const g=wgGrams();if(!(g>0&&g<=5000)){SFL='Enter the weight you’re having.';SFE=1;R();$('#wgw')?.focus();return}
+  const {n,cal,meta,s}=WG,q=Math.round(g/s.g*1e4)/1e4,wt=qf(WG.w)+' '+WG.u,total=cal*q,d=D,k=SM,it=logItem(d,k,n,total,1,{...meta,q,per:cal});
+  WG=null;SFL=`Added ${n} (${wt}) to ${mealOf(k).n}`;SFE=0;save();R();toast(`Added ${n} (${wt}) · ${fmt(total)} cal`,()=>unlog(d,k,it.id))},
+ wgCancel:()=>{WG=null;SFL='';SFE=0;R()},
+ // Weight box on a weighed food on Today: the new weight becomes servings of that food's serving size
+ iW:(d,el)=>{const x=items(D,d.m)[+d.i],s=wtOf(x);if(!x||!s)return;const v=parseFloat(el.value),max=5000/(s.u=='oz'?OZ_G:1);
+  if(!(v>0&&v<=max)){toast(`Enter a weight between 0 and ${fmt(max)} ${s.u}.`);el.value=qf(s.amt*iq(x));return}
+  const q=Math.round(v/s.amt*1e4)/1e4;if(q==iq(x))return;const per=iper(x);x.q=q;x.per=per;x.cal=Math.round(per*q);save();R()},
  saveRec:d=>{const m=matches(),f=d.src=='t'?(m.top[+d.i]&&!m.top[+d.i].sv&&m.top[+d.i].f):m.rec[+d.i];if(!f)return;const nf=newFoodObj(f.n,f.cal,f.br,f.sz);S.foods.unshift(nf);linkMatching(nf);save();SFL=`Saved ${f.n} to My foods`;SFE=0;R()},
  saveItem:d=>{const x=items(D,d.m)[+d.i];if(!x)return;const f=baseFood(x);if(!f.n){toast('Give it a name first');return}
   if(inFoods(f.n,x.br)){toast(`${f.n} is already in My foods`);return}
@@ -848,7 +883,7 @@ const ACT={
   RE=null;RERR='';save();R();scrollTo(0,0);toast(`Saved ${n} \u00b7 ${fmt(tot)} cal${ch?` \u00b7 updated ${ch} logged`:''}`)},
  reDel:()=>{const i=S.foods.findIndex(x=>x.id==RE.id);RE=null;RERR='';if(i<0){R();return}const [x]=S.foods.splice(i,1);save();R();scrollTo(0,0);toast(`Deleted “${x.n}”`,()=>{S.foods.splice(i,0,x);save();R()},'del')},
  reCancel:()=>{RE=null;RERR='';R();scrollTo(0,0)},
- kind:d=>{if(d.v=='x'||d.v=='w'){if(SM!='x'&&SM!='w'){LM=SM;XSUB=1}SM=d.v}else{SM=LM||defMeal();XSUB=0}SFL='';SFE=0;WFL='';WFE=0;R()},
+ kind:d=>{WG=null;if(d.v=='x'||d.v=='w'){if(SM!='x'&&SM!='w'){LM=SM;XSUB=1}SM=d.v}else{SM=LM||defMeal();XSUB=0}SFL='';SFE=0;WFL='';WFE=0;R()},
  xq:d=>{XN=XN==d.v?'':d.v;R()},
  xl:d=>{XL=+d.v;R()},
  addX:()=>{const h=parseFloat(XH);if(!(h>0&&h<=24)){SFL='Enter how many hours, like 0.5 or 1.25.';SFE=1;R();$('#xh')?.focus();return}
@@ -883,8 +918,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b
 document.addEventListener('change',e=>{const t=e.target,d=t.dataset;
  if(t.type=='checkbox'&&t.checked&&t.isConnected){t.classList.remove('pop');void t.offsetWidth;t.classList.add('pop');setTimeout(()=>t.classList.remove('pop'),320)}
  if(t.id=='fq'){t.value=qf(Q);return}if(d.p&&d.t)up(d.p,t.type=='checkbox'?t.checked:t.value,d.t,t);else if(d.a&&ACT[d.a])ACT[d.a](d,t)});
-document.addEventListener('input',e=>{const t=e.target;if(t.id=='fn'){FN=t.value;SFL='';patch($('#sl'),sheetList())}else if(t.id=='fc')FC=t.value;else if(t.id=='fq'){const v=parseFloat(t.value);if(v>0&&v<=50){Q=v;patch($('#sl'),sheetList())}}else if(t.id=='xn')XN=t.value;else if(t.id=='wl'||t.id=='wa')WL=t.value;else if(t.id=='wd')WD=t.value;else if(t.id=='xh'){XH=t.value;patch($('#xp'),xPrev())}else if(t.matches('textarea.nm')){if(/\n/.test(t.value))t.value=t.value.replace(/\n+/g,' ');fit(t)}else if(t.id=='ren'){if(RE)RE.n=t.value}else if(FE&&t.id=='fen')FE.n=t.value;else if(FE&&t.id=='feb')FE.br=t.value;else if(FE&&t.id=='fec')FE.cal=t.value;else if(FE&&t.id=='fea')FE.amt=t.value;else if(FE&&t.id=='feu')FE.u=t.value;else if(t.id=='req'){RQ=t.value;patch($('#rel'),reList())}});
-document.addEventListener('keydown',e=>{const id=e.target.id;if(e.key=='Enter'&&e.target.classList&&e.target.classList.contains('qin')){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&id=='unew'){e.preventDefault();ACT.unitAdd()}else if(e.key=='Enter'&&/^fe[nbca]$/.test(id)){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&id=='ren'){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&id=='req'){e.preventDefault();const f=reMatches()[0];if(f)ACT.reAdd({id:f.id})}else if(e.key=='Enter'&&(id=='ron'||id=='roc')){e.preventDefault();ACT.reOne()}else if(e.key=='Enter'&&e.target.matches('textarea.nm')){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&(e.target.id=='xn'||e.target.id=='xh')){e.preventDefault();ACT.addX()}else if(e.key=='Enter'&&id=='wl'){e.preventDefault();ACT.wLog()}else if(e.key=='Enter'&&id=='wa'){e.preventDefault();ACT.wAdd()}else if(e.key=='Enter'&&e.target.dataset&&e.target.dataset.a=='wEdit'){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&(e.target.id=='fn'||e.target.id=='fc')){e.preventDefault();ACT.addF()}else if(e.key=='Enter'&&e.target.closest('.obin')){e.preventDefault();obNext()}});
+document.addEventListener('input',e=>{const t=e.target;if(t.id=='fn'){FN=t.value;SFL='';patch($('#sl'),sheetList())}else if(t.id=='fc')FC=t.value;else if(t.id=='fq'){const v=parseFloat(t.value);if(v>0&&v<=50){Q=v;patch($('#sl'),sheetList())}}else if(t.id=='wgw'){if(WG){WG.w=t.value;SFL='';patch($('#wgp'),wgPrev())}}else if(t.id=='xn')XN=t.value;else if(t.id=='wl'||t.id=='wa')WL=t.value;else if(t.id=='wd')WD=t.value;else if(t.id=='xh'){XH=t.value;patch($('#xp'),xPrev())}else if(t.matches('textarea.nm')){if(/\n/.test(t.value))t.value=t.value.replace(/\n+/g,' ');fit(t)}else if(t.id=='ren'){if(RE)RE.n=t.value}else if(FE&&t.id=='fen')FE.n=t.value;else if(FE&&t.id=='feb')FE.br=t.value;else if(FE&&t.id=='fec')FE.cal=t.value;else if(FE&&t.id=='fea')FE.amt=t.value;else if(FE&&t.id=='feu')FE.u=t.value;else if(t.id=='req'){RQ=t.value;patch($('#rel'),reList())}});
+document.addEventListener('keydown',e=>{const id=e.target.id;if(e.key=='Enter'&&e.target.classList&&e.target.classList.contains('qin')){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&id=='wgw'){e.preventDefault();ACT.wgAdd()}else if(e.key=='Enter'&&id=='unew'){e.preventDefault();ACT.unitAdd()}else if(e.key=='Enter'&&/^fe[nbca]$/.test(id)){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&id=='ren'){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&id=='req'){e.preventDefault();const f=reMatches()[0];if(f)ACT.reAdd({id:f.id})}else if(e.key=='Enter'&&(id=='ron'||id=='roc')){e.preventDefault();ACT.reOne()}else if(e.key=='Enter'&&e.target.matches('textarea.nm')){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&(e.target.id=='xn'||e.target.id=='xh')){e.preventDefault();ACT.addX()}else if(e.key=='Enter'&&id=='wl'){e.preventDefault();ACT.wLog()}else if(e.key=='Enter'&&id=='wa'){e.preventDefault();ACT.wAdd()}else if(e.key=='Enter'&&e.target.dataset&&e.target.dataset.a=='wEdit'){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&(e.target.id=='fn'||e.target.id=='fc')){e.preventDefault();ACT.addF()}else if(e.key=='Enter'&&e.target.closest('.obin')){e.preventDefault();obNext()}});
 document.addEventListener('toggle',e=>{const k=e.target.dataset&&e.target.dataset.o;if(k!=null)O[k]=e.target.open},true);
 
 // =====================================================================
@@ -930,14 +965,15 @@ function R(){applyTheme();if(D>tdy())D=tdy();
 const APP=()=>$('#app');
 function slideIn(dir){const m=APP();m.style.transition='none';m.style.transform=`translate3d(${dir*Math.min(70,innerWidth*.15)}px,0,0)`;m.style.opacity='0';void m.offsetWidth;
  m.style.transition='transform .22s cubic-bezier(.16,1,.3,1),opacity .16s ease-out';m.style.transform='';m.style.opacity='';setTimeout(()=>{m.style.transition=''},240)}
-// Levels below Today: any other tab (or Settings) 1; a food or recipe editor and Add > Exercise or Weight add one;
+// Levels below Today: any other tab (or Settings) 1; a food or recipe editor, Add > Exercise or Weight, and the weigh panel add one;
 // the setup questions sit on top: one level per question answered, plus one when it was reopened from Goal (Cancel)
 function navDepth(){if(OB>=0)return (OBSNAP?1:0)+OB+(T=='today'?0:1);
- return (T=='today'?0:1)+(T=='foods'&&(RE||FE)?1:0)+(T=='add'&&(SM=='x'||SM=='w')&&XSUB?1:0)}
+ return (T=='today'?0:1)+(T=='foods'&&(RE||FE)?1:0)+(T=='add'&&(SM=='x'||SM=='w')&&XSUB?1:0)+(T=='add'&&WG?1:0)}
 function navUp(){if(OB>0)return ACT.obBack();
  if(OB==0){if(OBSNAP)ACT.obCancel();return}
  if(T=='foods'&&RE)return ACT.reCancel();
  if(T=='foods'&&FE)return ACT.feCancel();
+ if(T=='add'&&WG)return ACT.wgCancel();
  if(T=='add'&&(SM=='x'||SM=='w')&&XSUB)return ACT.kind({v:'f'});
  if(T!='today')goTab('today')}
 // ---- Phone back button (the same block in Big Saucy Recipes, Diet and Budget) ----
@@ -953,7 +989,7 @@ addEventListener('popstate',e=>{if(HPOP){HPOP=0;navSync();return}
  const to=Math.max(0,(e.state&&e.state.nav)||0);if(to>HD){HD=to;navSync();return}   // Forward: undo it
  let n=HD-to;HD=to;while(n-->0&&navDepth()>0)navUp();navSync()});
 ['pointerup','touchend','keydown'].forEach(t=>addEventListener(t,()=>setTimeout(navSync),true));   // catch layers opened by a long press
-function goTab(id){if(id==T){scrollTo({top:0,behavior:'smooth'});return}if(id!='foods'){RE=null;RERR='';FE=null;FERR='';UE=0}const o=TABS.map(t=>t[0]).concat('more'),dir=o.indexOf(id)>o.indexOf(T)?1:-1;T=id;R();scrollTo(0,0);slideIn(dir)}
+function goTab(id){if(id==T){scrollTo({top:0,behavior:'smooth'});return}if(id!='foods'){RE=null;RERR='';FE=null;FERR='';UE=0}if(id!='add')WG=null;const o=TABS.map(t=>t[0]).concat('more'),dir=o.indexOf(id)>o.indexOf(T)?1:-1;T=id;R();scrollTo(0,0);slideIn(dir)}
 
 // ---- Nav highlight: place the pill on tab `a`, or part-way (p = 0..1) toward tab `b` while swiping ----
 function hlBox(id){const nav=$('#nav'),b=nav.querySelector(`button[data-id="${id}"]`);if(!b)return null;const n=nav.getBoundingClientRect(),br=b.getBoundingClientRect(),q=id=='add',ic=b.querySelector('.ni'),r=ic?ic.getBoundingClientRect():br;
@@ -994,7 +1030,7 @@ const rmPeek=()=>{const p=$('#peek');if(p)p.remove()};
   busy=true;const rem=w-Math.abs(dx),dur=Math.round(Math.max(170,Math.min(300,rem/Math.max(1.2,Math.abs(vx)*1.4)))),tr=`transform ${dur}ms cubic-bezier(.2,.8,.2,1)`;
   mv(m,-dir*w,tr);mv(p,0,tr);placeHL(to);
   window.Feedback&&Feedback.hap('tick')
-  setTimeout(()=>{m.style.transition='none';m.style.transform='';T=to;R();scrollTo(0,0);m.style.willChange='';requestAnimationFrame(()=>{rmPeek();m.style.transition='';busy=false})},dur)};
+  setTimeout(()=>{m.style.transition='none';m.style.transform='';T=to;if(to!='add')WG=null;R();scrollTo(0,0);m.style.willChange='';requestAnimationFrame(()=>{rmPeek();m.style.transition='';busy=false})},dur)};
  document.addEventListener('touchend',end,{passive:true});document.addEventListener('touchcancel',end,{passive:true});
 })();
 
