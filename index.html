@@ -123,6 +123,13 @@ textarea.nm{flex:1 1 auto;height:auto;min-height:0;margin:0;resize:none;overflow
 .hs .st span{font-size:13px;font-weight:700;opacity:.85}.hs .st b{font:600 20px var(--fd)}
 .hs p{margin:0;font-weight:700}
 .hbtn{background:#fff;color:var(--pc);box-shadow:none;align-self:flex-start}
+/* Activity for the day shown, under the ring */
+.hact{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid #ffffff33}
+.hact>span{flex:none;font-size:13px;font-weight:700;opacity:.85}
+.hact>div{flex:1;min-width:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.hact button{min-width:0;background:#ffffff2e;color:#fff;border-radius:999px;padding:6px 2px;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:transform .25s var(--bounce),background .15s}
+.hact button.on{background:#fff;color:var(--pc)}.hact button:is(:active,.prs){transform:scale(.93)}
+.hactd{margin:5px 0 0;font-size:12px;font-weight:600;opacity:.85;text-align:right}
 @media(max-width:380px){.ring{width:108px}.hb{gap:12px}.hs .st b{font-size:18px}}
 
 /* Meal cards */
@@ -192,6 +199,7 @@ textarea.nm{flex:1 1 auto;height:auto;min-height:0;margin:0;resize:none;overflow
 .fr .unit{color:var(--mu);font-size:13px;font-weight:700}
 .fr.col{flex-direction:column;align-items:stretch}.fr.col>label{width:auto}
 .fr .seg{flex:1}
+.fr.born select{width:auto;flex:1 1 120px;min-width:0;max-width:170px}   /* birth month */
 
 /* Foods */
 .flist .row+.row{border-top:1px solid var(--bd)}
@@ -304,6 +312,7 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .obin{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .obin input{width:116px;flex:none;font:600 30px/1.1 var(--fd);text-align:center;padding:14px 10px}
 .obin span{font-weight:800;color:var(--mu);font-size:17px;margin-right:6px}
+.obin select{width:auto;flex:1 1 150px;max-width:220px;font:600 22px/1.1 var(--fd);padding:14px 10px}   /* birth month */
 .opts{display:flex;flex-direction:column;gap:8px}
 .opts.two{flex-direction:row}.opts.two .opt{flex:1;align-items:center;padding:22px 12px}
 .opt{background:var(--card);border:1.5px solid var(--bd);color:var(--tx);border-radius:18px;padding:13px 16px;text-align:left;display:flex;flex-direction:column;gap:2px;transition:transform .2s var(--bounce),border-color .15s,background .15s}
@@ -331,9 +340,6 @@ body.dragging,body.dragging *{cursor:grabbing!important;-webkit-user-select:none
 .wrow .wd{flex:1;min-width:0}.wrow .wd b{display:block;font-size:14px}.wrow .wd span{font-size:12px;color:var(--mu);font-weight:700}
 .wrow input{width:78px;flex:none;text-align:right}.wrow .unit{color:var(--mu);font-size:13px;font-weight:700}
 .wrow .chip{min-width:58px;text-align:center}
-details.dt summary{margin:0;display:flex;align-items:center;justify-content:space-between}
-details.dt summary .sec{margin:0}details.dt summary svg{color:var(--mu);transition:transform .2s}details.dt[open] summary svg{transform:rotate(90deg)}
-details.dt .form{margin-top:12px}
 @media(max-width:520px){.fr{flex-wrap:wrap;row-gap:6px}.fr>label{width:100%}.seg.p4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
@@ -359,7 +365,8 @@ const TC={today:['#ff8a1f','#ec3f57'],week:['#3f9f2a','#1b9a8a'],add:['#ff8a1f',
 // Intensity: MET value (energy used vs. sitting still), label, examples
 const LEVELS=[[3,'Light','Easy walk, stretching, chores'],[5,'Moderate','Brisk walk, easy bike, weights'],[8,'Vigorous','Running, HIIT, hard cardio']];
 const XQUICK=['Walking','Running','Cycling','Strength training','Yoga','Swimming'];
-const ACTV=[[1.2,'Sedentary','desk job, little exercise'],[1.375,'Lightly active','exercise 1\u20133 days a week'],[1.55,'Moderately active','exercise 3\u20135 days a week'],[1.725,'Very active','hard exercise 6\u20137 days a week'],[1.9,'Extra active','physical job plus training']];
+// Everyday movement, not counting workouts (those are logged as exercise and added on top): multiplier, short label, label, description
+const ACTV=[[1.2,'Sitting','Mostly sitting','Desk work, not much walking'],[1.375,'Some','Some moving','On your feet part of the day'],[1.55,'On feet','On your feet','Standing or walking most of the day'],[1.725,'Physical','Physical work','Lifting, carrying, manual labor']];
 const PACE=[0.5,1,1.5,2];   // lb per week
 // Starting list of serving-size units; you can edit it from any food
 const UNITS=['serving','g','oz','cup','tbsp','tsp','slice','piece','ml','scoop','bar','can','bottle'];
@@ -388,7 +395,7 @@ const qs=q=>Number.isInteger(q)?String(q):q.toFixed(1);
 // =====================================================================
 let S,T='today',D=tdy(),O={},SM='b',LM='b',XN='',XH='',XL=1,FN='',FC='',Q=1,SFL='',SFE=0;
 let WG=null;   // UI-only: the food being weighed on the Add tab {n, cal, meta, s: its weight serving, u: 'g'|'oz', w: typed weight}
-const BLANK=()=>({sex:'f',age:'',ft:'',inch:'',lbs:'',goal:'',act:1.375,pace:1});
+const BLANK=()=>({sex:'f',born:'',ft:'',inch:'',lbs:'',goal:'',act:1.2,pace:1});   // born: 'YYYY-MM'; act: your usual activity level
 const seed=()=>({v:0,set:{theme:'system'},prof:BLANK(),foods:FOODS.map(([n,cal])=>({id:uid('f'),n,cal})),days:{},wts:[]});
 // To change the data shape later, ADD a function to the end of this list; never edit an old one.
 const MIGRATIONS=[
@@ -407,6 +414,10 @@ const MIGRATIONS=[
    if(!x.fid){const f=by[fkey(x.n,x.br)];if(f&&Math.abs(num(f.cal)-num(x.per))<=1)x.fid=f.id}}))})},
  // v6: weigh-ins [{id, d:'YYYY-MM-DD', lbs}], one per day. Your current weight becomes the first one, dated today.
  S=>{if(!Array.isArray(S.wts))S.wts=[];if(!S.wts.length&&num(S.prof.lbs)>0)S.wts.push({id:uid('w'),d:tdy(),lbs:num(S.prof.lbs)})},
+ // v7: age becomes a birth month (born:'YYYY-MM'), estimated by assuming your birthday was six months ago, so it's off by half a year at most.
+ //     Activity now leaves out workouts (they're logged as exercise), so each old level moves down one step. Days can set their own (days[d].act).
+ S=>{const p=S.prof;if(!p.born&&num(p.age)>0){const d=new Date();d.setMonth(d.getMonth()-6);p.born=(d.getFullYear()-Math.round(num(p.age)))+'-'+String(d.getMonth()+1).padStart(2,'0')}delete p.age;
+  const down={1.375:1.2,1.55:1.375,1.725:1.55,1.9:1.725},a=num(p.act);p.act=down[a]||(ACTV.some(x=>x[0]==a)?a:1.2)},
 ];
 function migrate(){for(let v=S.v||0;v<MIGRATIONS.length;v++)MIGRATIONS[v](S);S.v=MIGRATIONS.length;syncRecipes()}
 function load(){try{S=JSON.parse(localStorage.getItem(LS))}catch(e){S=null}if(!S||typeof S!='object')S=seed();migrate()}
@@ -415,7 +426,7 @@ let SVT=0,SVFAIL=0;
 function flush(){clearTimeout(SVT);SVT=0;RECC=null;try{const t=JSON.stringify(S);localStorage.setItem(LS,t);SVFAIL=0;window.CloudSync&&CloudSync.saved(t)}catch(e){if(!SVFAIL){SVFAIL=1;setTimeout(()=>toast('Couldn’t save on this device. Download a backup in Settings.'),0)}}}
 const save=()=>{RECC=null;syncRecipes();clearTimeout(SVT);SVT=setTimeout(flush,300)};
 // Commit a field that's mid-edit (its change event hasn't fired yet) before the page is hidden
-function commitActive(){const a=document.activeElement,d=a&&a.dataset;if(d&&d.p&&d.t)setPath(d.p,a.value,d.t);else if(d&&(d.a=='iCal'||d.a=='iQs'))ACT[d.a](d,a)}
+function commitActive(){const a=document.activeElement,d=a&&a.dataset;if(d&&d.p&&d.t)setPath(d.p,a.value,d.t);else if(d&&(d.a=='iCal'||d.a=='iQs'||d.a=='born'))ACT[d.a](d,a)}
 const leave=()=>{commitActive();flush()};
 addEventListener('pagehide',leave);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)leave();else if(LAST!==tdy()){if(D==LAST)D=tdy();LAST=tdy();R()}});
@@ -423,8 +434,12 @@ let LAST=tdy();
 
 // Path-based edits: 'days.2026-10-14.b.0.cal', 'prof.age' ...
 const get=p=>p.split('.').reduce((o,k)=>o==null?o:o[k],S);
-// Allowed ranges for profile numbers (shared by the setup questions and the Goal tab)
-const RANGE={age:[13,100,'Enter an age between 13 and 100.'],ft:[3,8,'Enter feet between 3 and 8.'],inch:[0,11.9,'Enter inches between 0 and 11.'],lbs:[70,700,'Enter a weight between 70 and 700 lb.'],goal:[70,700,'Enter a goal between 70 and 700 lb.']};
+// Age in whole years from a birth month 'YYYY-MM' (counts the birthday as reached once its month starts)
+const ageOf=b=>{const m=/^(\d{4})-(\d\d)$/.exec(b||'');if(!m)return 0;const n=new Date();return n.getFullYear()-+m[1]-(n.getMonth()+1<+m[2]?1:0)};
+// Older saved data (before migration v7) still has a plain age
+const profAge=p=>p.born?ageOf(p.born):num(p.age);
+// Allowed ranges for profile numbers (shared by the setup questions and Settings)
+const RANGE={age:[13,100,'Enter a birth year that makes you 13 to 100.'],ft:[3,8,'Enter feet between 3 and 8.'],inch:[0,11.9,'Enter inches between 0 and 11.'],lbs:[70,700,'Enter a weight between 70 and 700 lb.'],goal:[70,700,'Enter a goal between 70 and 700 lb.']};
 // Returns an error message, or '' once the value is stored
 function setPath(p,v,t){const k=p.split('.'),l=k.pop(),o=k.reduce((o,x)=>o==null?o:o[x],S);if(o==null)return 'gone';
  let val=t=='n'?(v===''?'':(parseFloat(v)||0)):v;
@@ -439,8 +454,9 @@ function up(p,v,t,el){const err=setPath(p,v,t);if(err&&err!='gone'){toast(err);i
 // Mifflin-St Jeor resting burn \u00d7 activity = maintenance. Lose phase subtracts 500 cal/day per lb/week,
 // never going below a common floor (1,200 women / 1,500 men). Maintenance instead when you're at goal,
 // your goal is above your weight (why:'gain'), or maintenance itself is already at or under the floor (why:'low').
-function target(){const p=S.prof;if(!(num(p.age)>0&&num(p.ft)>0&&num(p.lbs)>0&&num(p.goal)>0))return null;
- const kg=num(p.lbs)*.45359237,cm=(num(p.ft)*12+num(p.inch))*2.54,bmr=10*kg+6.25*cm-5*num(p.age)+(p.sex=='m'?5:-161),tdee=bmr*num(p.act||1.2),toLose=num(p.lbs)-num(p.goal),floorV=p.sex=='m'?1500:1200;
+// act: activity multiplier to use (a day's own level); leave it out for your usual level.
+function target(act){const p=S.prof,age=profAge(p);if(!(age>0&&num(p.ft)>0&&num(p.lbs)>0&&num(p.goal)>0))return null;
+ const kg=num(p.lbs)*.45359237,cm=(num(p.ft)*12+num(p.inch))*2.54,bmr=10*kg+6.25*cm-5*age+(p.sex=='m'?5:-161),tdee=bmr*num(act||p.act||1.2),toLose=num(p.lbs)-num(p.goal),floorV=p.sex=='m'?1500:1200;
  if(toLose<=0.5)return {bmr,tdee,t:r10(tdee),phase:'maintain',why:toLose<-0.5?'gain':'goal'};
  if(tdee<=floorV)return {bmr,tdee,t:r10(tdee),phase:'maintain',why:'low',floorV};
  const raw=tdee-num(p.pace)*500,t=r10(Math.max(raw,floorV)),def=tdee-t,rate=def*7/3500,weeks=rate>0.05?toLose/rate:null;
@@ -456,12 +472,14 @@ const dayTot=d=>foodTot(d)-burned(d);
 const xWeight=()=>num(S.prof.lbs)||150;
 const burn=(h,lvl,lbs)=>Math.round(LEVELS[lvl][0]*num(lbs)*.45359237*num(h));
 // Past days keep the target they were logged under; today and later use the current target
-const dayTarget=d=>{const t=target(),x=S.days[d];return d<tdy()&&x&&x.t?x.t:t?t.t:0};
+// A day's activity level: its own if you picked one on Today, otherwise your usual level
+const dayAct=d=>num(S.days[d]&&S.days[d].act)||num(S.prof.act)||1.2;
+const dayTarget=d=>{const t=target(dayAct(d)),x=S.days[d];return d<tdy()&&x&&x.t?x.t:t?t.t:0};
 const dayEnsure=d=>{const x=S.days[d]||(S.days[d]={b:[],l:[],d:[],s:[],x:[]});if(!x.x)x.x=[];return x};
-function snapTarget(){const t=target(),x=S.days[tdy()];if(x&&t)x.t=t.t}
+function snapTarget(){const T0=tdy(),t=target(dayAct(T0)),x=S.days[T0];if(x&&t)x.t=t.t}
 // quiet: caller saves and renders once itself (avoids repeated renders when logging several items)
 // meta: br (brand), sz (one serving, like "2 tbsp"), q (servings), per (calories per serving), fid (saved food it came from)
-function logItem(d,k,n,cal,quiet,meta){const x=dayEnsure(d),t=target();if(t&&(d>=tdy()||!x.t))x.t=t.t;meta=meta||{};
+function logItem(d,k,n,cal,quiet,meta){const x=dayEnsure(d),t=target(dayAct(d));if(t&&(d>=tdy()||!x.t))x.t=t.t;meta=meta||{};
  const q=num(meta.q)>0?num(meta.q):1,per=meta.per!=null?num(meta.per):num(cal)/q,it={id:uid('i'),n,cal:Math.round(num(cal)),q,per};
  if(meta.br)it.br=meta.br;if(meta.sz)it.sz=meta.sz;if(meta.fid)it.fid=meta.fid;x[k].push(it);if(!quiet){save();R()}return it}
 const iq=x=>num(x.q)>0?num(x.q):1;
@@ -476,7 +494,7 @@ function syncLogged(){const by={};S.foods.forEach(f=>{if(f)by[f.id]=f});let c=0;
 // Link entries that aren't linked yet and match this food (same name, brand and calories per serving)
 function linkMatching(f){const ids=new Set(S.foods.map(g=>g&&g.id)),key=fkey(f.n,f.br),per=num(f.cal);
  Object.values(S.days).forEach(day=>MEALS.forEach(m=>(day[m.k]||[]).forEach(x=>{if(x.fid&&ids.has(x.fid))return;if(fkey(baseFood(x).n,x.br)==key&&Math.abs(iper(x)-per)<=1)x.fid=f.id})))}
-function logX(d,n,h,lvl){const x=dayEnsure(d),t=target();if(t&&(d>=tdy()||!x.t))x.t=t.t;const w=xWeight(),it={id:uid('x'),n,h,lvl,w,cal:burn(h,lvl,w)};x.x.push(it);return it}
+function logX(d,n,h,lvl){const x=dayEnsure(d),t=target(dayAct(d));if(t&&(d>=tdy()||!x.t))x.t=t.t;const w=xWeight(),it={id:uid('x'),n,h,lvl,w,cal:burn(h,lvl,w)};x.x.push(it);return it}
 // ---- Weigh-ins: one per day. The latest one is your current weight, so logging also updates the daily target. ----
 const wSorted=()=>(S.wts||[]).slice().sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
 const latestW=()=>{const a=wSorted();return a.length?a[a.length-1]:null};
@@ -558,16 +576,19 @@ function exCard(){const xs=xItems(D),p=`days.${D}.x`;
  return `<section class="card exc" style="--mc:var(--ex)"><div class="mh"><span class="md"></span><h3>Exercise</h3><span class="mt">${xs.length?'\u2212':''}${fmt(burned(D))} <small>cal</small></span><button class="addm" data-a="open" data-m="x" aria-label="Add exercise">+</button></div>`
  +(xs.length?`<div class="items">${xs.map((x,i)=>`<div class="xrow ed"><div class="xtop">${nameBox(x.n,`${p}.${i}.n`,'Exercise')}<span class="xcal">\u2212${fmt(x.cal)}</span><button class="x" data-a="delX" data-i="${i}" aria-label="Delete ${esc(x.n)}">${ICX}</button></div><div class="xsub"><input type="number" inputmode="decimal" step="0.25" value="${esc(x.h)}" data-a="xHrs" data-i="${i}" aria-label="Hours"><span class="unit">hr</span><div class="lv">${LEVELS.map(([,l],j)=>`<button class="${num(x.lvl)==j?'on':''}" data-a="xLvl" data-i="${i}" data-v="${j}">${l}</button>`).join('')}</div></div></div>`).join('')}</div>`
  :`<div class="empty"><button class="ghost" data-a="open" data-m="x">Worked out? Tap to log it. Calories burned add to what you can eat.</button></div>`)+`</section>`}
+// How active you are on the day shown (everyday movement; workouts go in Exercise)
+function actPick(){const a=dayAct(D),cur=ACTV.find(x=>x[0]==a)||ACTV[0];
+ return `<div class="hact" role="group" aria-label="Activity on this day, not counting workouts"><span>Activity</span><div>${ACTV.map(([v,sh,l])=>`<button class="${a==v?'on':''}" data-a="dayAct" data-v="${v}" aria-label="${l}"${a==v?' aria-pressed="true"':''}>${sh}</button>`).join('')}</div></div><p class="hactd">${cur[2]}: ${cur[3].charAt(0).toLowerCase()+cur[3].slice(1)}. Workouts go under Exercise.</p>`}
 function hello(){const h=new Date().getHours(),g=h<5?'Up late':h<12?'Good morning':h<17?'Good afternoon':'Good evening',T0=tdy(),tt=dayTarget(T0),left=tt?tt+burned(T0)-foodTot(T0):0;
  return `<div class="hello"><b>${g}</b><span>${tt?(left>=0?fmt(left)+' cal left today':fmt(-left)+' cal over today'):'No target yet'}</span></div>`}
 function vToday(){const food=foodTot(D),bn=burned(D),tt=dayTarget(D),budget=tt?tt+bn:0,left=budget-food,st=(l,v)=>`<div class="st"><span>${l}</span><b>${v}</b></div>`;
  return hello()+`<section class="hero"><div class="dnav"><button data-a="day" data-n="-1" aria-label="Previous day">${CHL}</button><button class="dl" data-a="today" aria-label="Go to today"><b>${dayLabel(D)}</b><span>${fmtDay(D)}</span></button><button data-a="day" data-n="1" aria-label="Next day" ${D>=tdy()?'disabled':''}>${CHR}</button></div>
- <div class="hb">${ring(food,budget)}<div class="hs">${tt?st('Target',fmt(tt))+st('Eaten',fmt(food))+st('Exercise','+'+fmt(bn))+st(left>=0?'Left':'Over',fmt(Math.abs(left))):`<p>Set your daily target to see what's left.</p><button class="hbtn" data-a="tab" data-id="goal">Set my target</button>`}</div></div></section>
+ <div class="hb">${ring(food,budget)}<div class="hs">${tt?st('Target',fmt(tt))+st('Eaten',fmt(food))+st('Exercise','+'+fmt(bn))+st(left>=0?'Left':'Over',fmt(Math.abs(left))):`<p>Set your daily target to see what's left.</p><button class="hbtn" data-a="tab" data-id="goal">Set my target</button>`}</div></div>${tt?actPick():''}</section>
  ${needBk()?`<section class="card"><h3><span>Back up your log?</span></h3><p class="mu" style="margin:0 0 12px">It’s only saved in this browser, and some browsers clear site data after a while.</p><div class="row"><button class="btn" data-a="tab" data-id="more">Back up</button><button class="btn g bd" data-a="bkLater">Later</button></div></section>`:''}
  <div class="meals">${MEALS.map(mealCard).join('')}${exCard()}</div>`}
 
 // ---- Week ----
-function chart(rows){const W=340,H=184,pl=4,pr=4,pt=20,pb=24,ih=H-pt-pb,cw=(W-pl-pr)/7,bw=cw*.58,t=target();
+function chart(rows){const W=340,H=184,pl=4,pr=4,pt=20,pb=24,ih=H-pt-pb,cw=(W-pl-pr)/7,bw=cw*.58,ts=[...new Set(rows.map(r=>r.t).filter(Boolean))];
  const mx=Math.max(500,...rows.map(r=>r.tot),...rows.map(r=>r.t||0))*1.14,y=v=>pt+ih-v/mx*ih;
  const bars=rows.map((r,i)=>{const x=pl+cw*i+(cw-bw)/2,cx=(x+bw/2).toFixed(1),over=r.t&&r.tot>r.t,on=r.d==tdy();
   return (r.tot?`<rect x="${x.toFixed(1)}" y="${y(r.tot).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(3,r.tot/mx*ih).toFixed(1)}" rx="6" style="fill:${over?'var(--grape)':'var(--lime)'}"><title>${fmtDay(r.d)}: ${fmt(r.tot)} cal</title></rect><text x="${cx}" y="${(y(r.tot)-5).toFixed(1)}" class="cv">${fmt(r.tot)}</text>`
@@ -575,12 +596,12 @@ function chart(rows){const W=340,H=184,pl=4,pr=4,pt=20,pb=24,ih=H-pt-pb,cw=(W-pl
  // Target line follows each day's own target, so a bar's color always matches where it sits against the line
  let tl='';rows.forEach((r,i)=>{if(!r.t)return;const yy=y(r.t).toFixed(1),p=rows[i-1],x1=pl+cw*i+(p&&p.t==r.t?0:2),x2=pl+cw*(i+1)-(rows[i+1]&&rows[i+1].t==r.t?0:2);tl+=`<line x1="${x1.toFixed(1)}" x2="${x2.toFixed(1)}" y1="${yy}" y2="${yy}" class="tline"/>`});
  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Net calories (food minus exercise) each day for the last 7 days">${tl}${bars}</svg>
- <div class="legend"><span><i style="background:var(--lime)"></i>Within target</span><span><i style="background:var(--grape)"></i>Over target</span>${tl?`<span><i class="tl"></i>Target${t?' '+fmt(t.t):''}</span>`:''}</div>`}
+ <div class="legend"><span><i style="background:var(--lime)"></i>Within target</span><span><i style="background:var(--grape)"></i>Over target</span>${tl?`<span><i class="tl"></i>Target${ts.length==1?' '+fmt(ts[0]):''}</span>`:''}</div>`}
 function vWeek(){const T0=tdy(),ds=Array.from({length:7},(_,i)=>addDays(T0,i-6)),rows=ds.map(d=>{const food=foodTot(d),bn=burned(d);return {d,food,bn,tot:Math.max(0,food-bn),t:dayTarget(d)}}),t=target();
  // Stats use finished days only; today is still in progress
  const lg=rows.filter(r=>r.food>0&&r.d<T0),avg=lg.length?sum(lg,r=>r.tot)/lg.length:0,wt=lg.filter(r=>r.t),on=wt.filter(r=>r.tot<=r.t).length;
  const chip=r=>{const df=r.tot-r.t;return df>0?`<span class="chip over">${fmt(df)} over</span>`:r.d==T0?`<span class="chip">${fmt(-df)} left</span>`:`<span class="chip ok">${fmt(-df)} under</span>`};
- return `<h2 class="ph">Last 7 days</h2><section class="card"><div class="tiles2"><div><span class="mu">Daily average</span><b>${fmt(avg)}</b><small>${lg.length} of 6 full days logged</small></div><div><span class="mu">Within target</span><b>${wt.length?`${on} of ${wt.length}`:'–'}</b><small>${t?'Target '+fmt(t.t)+' cal':'No target set yet'}</small></div></div>${chart(rows)}<p class="mu" style="margin:6px 0 0">Bars show food minus exercise. Averages leave out today until it's over.</p></section>
+ return `<h2 class="ph">Last 7 days</h2><section class="card"><div class="tiles2"><div><span class="mu">Daily average</span><b>${fmt(avg)}</b><small>${lg.length} of 6 full days logged</small></div><div><span class="mu">Within target</span><b>${wt.length?`${on} of ${wt.length}`:'–'}</b><small>${t?'Usually '+fmt(t.t)+' cal a day':'No target set yet'}</small></div></div>${chart(rows)}<p class="mu" style="margin:6px 0 0">Bars show food minus exercise. Averages leave out today until it's over.</p></section>
  <section class="card"><div class="sec">Days</div>${rows.slice().reverse().map(r=>`<button class="dayrow" data-a="goDay" data-d="${r.d}"><span><b>${dayLabel(r.d)}</b><span class="mu">${fmtDay(r.d)}</span></span><span class="dr">${r.food||r.bn?`<b>${fmt(r.tot)} cal</b>${r.bn?`<span class="mu" style="font-size:12px">${fmt(r.food)} eaten \u2212 ${fmt(r.bn)} exercise</span>`:''}${r.t?chip(r):''}`:'<span class="chip">Nothing logged</span>'}</span></button>`).join('')}</section>`}
 
 // ---- Foods ----
@@ -628,7 +649,7 @@ function vRecipe(){const ps=RE.parts,tot=sum(ps,p=>liveCal(p)*num(p.q));
 // ---- Goal ----
 const PACE_TXT={0.5:'Gentle and easiest to stick with',1:'Steady, a common choice',1.5:'Faster, takes more discipline',2:'Fastest, the most aggressive'};
 const optList=(list,cur,act,k)=>`<div class="opts">${list.map(([v,l,d])=>`<button class="opt ${String(cur)==String(v)?'on':''}" data-a="${act}" data-k="${k}" data-v="${v}"><b>${l}</b>${d?`<span>${d}</span>`:''}</button>`).join('')}</div>`;
-const actOpts=(cur,act)=>optList(ACTV.map(([v,l,d])=>[v,l,d.charAt(0).toUpperCase()+d.slice(1)]),num(cur),act,'act');
+const actOpts=(cur,act)=>optList(ACTV.map(([v,,l,d])=>[v,l,d]),num(cur),act,'act');
 const paceOpts=(cur,act)=>optList(PACE.map(v=>[v,qs(v)+' lb a week',PACE_TXT[v]]),num(cur),act,'pace');
 function resLines(t){const rate=t.phase=='lose'?Math.round(t.rate*10)/10:0;
  return `<div><div class="ln"><span>Resting burn (BMR)</span><b>${fmt(t.bmr)}</b></div><div class="ln"><span>Maintenance</span><b>${fmt(t.tdee)}</b></div>${t.phase=='lose'?`<div class="ln"><span>Daily deficit</span><b>${fmt(t.def)}</b></div>${t.weeks?`<div class="ln"><span>${qs(Math.round(t.toLose*10)/10)} lb to go</span><b>~${Math.ceil(t.weeks)} weeks \u00b7 ${longDate(t.date)}</b></div>`:''}`:''}</div>
@@ -665,51 +686,62 @@ function wCard(){const a=wSorted(),l=a[a.length-1],f=a[0],g=num(S.prof.goal),T0=
  <div class="wlog"><input id="wd" type="date" max="${T0}" value="${esc(WD)}" aria-label="Weigh-in date"><input id="wl" type="number" inputmode="decimal" step="0.1" placeholder="${l?wNum(l.lbs):'180'}" value="${esc(WL)}" aria-label="Weight in pounds"><span class="unit">lb</span><button class="btn" data-a="wLog">Log</button></div>
  <div class="sflash${WFE?' err':''}" aria-live="polite" style="margin:6px 0 4px">${esc(WFL)}</div>
  ${chart}${hist}</section>`}
-const CHD='<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
-function vGoal(){const p=S.prof,t=target(),inp=(id,k,ph)=>`<input id="${id}" type="number" inputmode="decimal" value="${esc(p[k])}" placeholder="${ph}" data-p="prof.${k}" data-t="n">`;
- const res=t?`<div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:wrap"><div class="tbig"><span class="mu">Eat about</span><b>${fmt(t.t)}</b><span class="mu">calories a day</span></div><span class="chip ${t.phase=='lose'?'over':'ok'}" style="margin-top:4px">${t.phase=='lose'?`Losing ${qs(Math.round(t.rate*10)/10)} lb a week`:'Maintaining'}</span></div><div style="margin-top:12px">${resLines(t)}</div>`
-  :'<p class="mu" style="margin:0">Some details are missing. Fill them in under Your details to get your daily target.</p>';
+function vGoal(){const p=S.prof,t=target();
+ const res=t?`<div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:wrap"><div class="tbig"><span class="mu">Eat about</span><b>${fmt(t.t)}</b><span class="mu">calories on a usual day</span></div><span class="chip ${t.phase=='lose'?'over':'ok'}" style="margin-top:4px">${t.phase=='lose'?`Losing ${qs(Math.round(t.rate*10)/10)} lb a week`:'Maintaining'}</span></div><div style="margin-top:12px">${resLines(t)}</div><p class="mu" style="margin:8px 0 0">Set how active each day is on Today, and your target for that day follows.</p>`
+  :`<p class="mu" style="margin:0">${num(p.goal)>0?'Some details are missing. Fill them in under Settings, About you.':'Enter your goal weight below to get your daily target.'}</p>`;
  return `<h2 class="ph">Daily target</h2><section class="card">${res}</section>
- ${wCard()}
- <section class="card"><details class="dt" ${O.det?'open':''} data-o="det"><summary><span class="sec">Your details</span>${CHD}</summary><div class="form">
- <div class="fr"><label>Sex</label><div class="seg">${[['f','Female'],['m','Male']].map(([v,l])=>`<button class="${p.sex==v?'on':''}" data-a="prof" data-k="sex" data-v="${v}">${l}</button>`).join('')}</div></div>
- <div class="fr"><label for="pa">Age</label>${inp('pa','age','')}<span class="unit">years</span></div>
- <div class="fr"><label for="pft">Height</label>${inp('pft','ft','')}<span class="unit">ft</span>${inp('pin','inch','0')}<span class="unit">in</span></div>
- <div class="fr"><label for="plb">Current weight</label>${inp('plb','lbs','')}<span class="unit">lb</span></div>
- <div class="fr"><label for="pg">Goal weight</label>${inp('pg','goal','')}<span class="unit">lb</span></div>
- <div class="fr col"><label>Activity</label>${actOpts(p.act,'prof')}</div>
+ <section class="card"><div class="sec">Your plan</div><div class="form">
+ <div class="fr"><label for="pg">Goal weight</label><input id="pg" type="number" inputmode="decimal" value="${esc(p.goal)}" placeholder="160" data-p="prof.goal" data-t="n"><span class="unit">lb</span></div>
  <div class="fr col"><label>Pace</label><div class="seg p4">${PACE.map(v=>`<button class="${num(p.pace)==v?'on':''}" data-a="prof" data-k="pace" data-v="${v}">${qs(v)} lb/wk</button>`).join('')}</div></div>
- <p class="mu" style="margin:0">Current weight follows your latest weigh-in, and your target updates with it. Once you reach your goal, the target switches to maintenance. Estimates use the Mifflin-St Jeor formula, so check with your doctor before a big change.</p>
- <button class="btn g bd" data-a="obStart">Answer the setup questions again</button></div></details></section>`}
+ <p class="mu" style="margin:0">${PACE_TXT[num(p.pace)]||''}. Once you reach your goal, the target switches to maintenance.</p></div></section>
+ ${wCard()}`}
 
 // ---- First-run questionnaire (one question per screen) ----
 let OB=-1,OBE='';
-const obSteps=()=>['sex','age','height','weight','goal','act'].concat(num(S.prof.lbs)-num(S.prof.goal)>0.5?['pace']:[],['done']);
+const obSteps=()=>['sex','born','height','weight','goal','act'].concat(num(S.prof.lbs)-num(S.prof.goal)>0.5?['pace']:[],['done']);
 function vOnboard(){const st=obSteps();if(OB>=st.length)OB=st.length-1;const k=st[OB],p=S.prof,n=st.length-1;
  const q=(h,sub)=>`<div class="obq"><h2>${h}</h2>${sub?`<p class="mu">${sub}</p>`:''}</div>`;
  const box=(id,key,ph,unit,mode)=>`<input id="${id}" type="number" inputmode="${mode||'decimal'}" value="${esc(p[key])}" placeholder="${ph}"><span>${unit}</span>`;
  const next=`<div class="sflash err" aria-live="polite">${esc(OBE)}</div><button class="btn wide" data-a="obNext">Next</button>`;
  let b='';
  if(k=='sex')b=q('Welcome! Let\u2019s set your daily calorie target.','A few quick questions. First, which sex should the calorie formula use?')+`<div class="opts two">${[['f','Female'],['m','Male']].map(([v,l])=>`<button class="opt ${p.sex==v?'on':''}" data-a="obPick" data-k="sex" data-v="${v}"><b>${l}</b></button>`).join('')}</div>`;
- else if(k=='age')b=q('How old are you?')+`<div class="obin">${box('oa','age','30','years','numeric')}</div>`+next;
+ else if(k=='born')b=q('When were you born?','Month and year are enough. Your age keeps itself up to date.')+`<div class="obin obborn">${bornBoxes('obm','oby','')}</div>`+next;
  else if(k=='height')b=q('How tall are you?')+`<div class="obin">${box('oft','ft','5','ft','numeric')}${box('oin','inch','6','in','numeric')}</div>`+next;
  else if(k=='weight')b=q('What do you weigh now?','You can update this any time on the Goal tab.')+`<div class="obin">${box('olb','lbs','180','lb')}</div>`+next;
  else if(k=='goal')b=q('What\u2019s your goal weight?','When you reach it, your target switches to maintenance.')+`<div class="obin">${box('og','goal','160','lb')}</div>`+next;
- else if(k=='act')b=q('How active are you?','Count your workouts and how much you move at work.')+actOpts(p.act,'obPick');
+ else if(k=='act')b=q('How much do you move on a usual day?','Leave out workouts; you’ll log those as exercise. You can change this for any day on Today.')+actOpts(p.act,'obPick');
  else if(k=='pace')b=q('How fast do you want to lose it?',`${qs(Math.round((num(p.lbs)-num(p.goal))*10)/10)} lb to go.`)+paceOpts(p.pace,'obPick');
- else{const t=target();b=t?`<section class="hero obres"><span>Your daily target</span><b>${fmt(t.t)}</b><span>calories a day${t.phase=='lose'?` \u00b7 losing ${qs(Math.round(t.rate*10)/10)} lb a week`:' \u00b7 maintaining'}</span></section><section class="card">${resLines(t)}</section><button class="btn wide" data-a="obDone">Start tracking</button><p class="mu" style="margin:0;text-align:center">You can change any of this later on the Goal tab.</p>`
+ else{const t=target();b=t?`<section class="hero obres"><span>Your daily target</span><b>${fmt(t.t)}</b><span>calories a day${t.phase=='lose'?` \u00b7 losing ${qs(Math.round(t.rate*10)/10)} lb a week`:' \u00b7 maintaining'}</span></section><section class="card">${resLines(t)}</section><button class="btn wide" data-a="obDone">Start tracking</button><p class="mu" style="margin:0;text-align:center">Change your goal and pace on the Goal tab, and the rest in Settings.</p>`
   :q('Something\u2019s missing','Go back and check your answers.');}
  return `<div class="ob"><div class="obtop">${OB>0?'<button class="lnk bkb" data-a="obBack">\u2039 Back</button>':'<span></span>'}<span class="mu">${k=='done'?'All set':`Question ${OB+1} of ${n}`}</span>${S.set.onboarded?'<button class="lnk" data-a="obCancel">Cancel</button>':'<span></span>'}</div><div class="obbar"><i style="width:${(OB/n*100).toFixed(1)}%"></i></div>${b}</div>`}
-const OBCHK={age:[['oa','age']],height:[['oft','ft'],['oin','inch']],weight:[['olb','lbs']],goal:[['og','goal']]};
+const OBCHK={height:[['oft','ft'],['oin','inch']],weight:[['olb','lbs']],goal:[['og','goal']]};
 // Check every box on the screen first, then store them together
 function obNext(){const k=obSteps()[OB],vals=[];
+ if(k=='born'){const b=readBorn('obm','oby');if(!b){OBE=b===null?RANGE.age[2]:'Pick a month and enter the year.';R();$('#'+(b===null||$('#obm').value?'oby':'obm'))?.focus();return}S.prof.born=b;delete S.prof.age;OBE='';OB++;save();R();return}
  for(const [id,key] of OBCHK[k]||[]){const el=$('#'+id),raw=el?el.value.trim():'',v=raw===''&&key=='inch'?0:parseFloat(raw),[lo,hi,msg]=RANGE[key];if(!(v>=lo&&v<=hi)){OBE=msg;R();$('#'+id)?.focus();return}vals.push([key,v])}
  vals.forEach(([key,v])=>S.prof[key]=v);OBE='';OB++;save();R()}
 // Re-running setup works on the live profile; keep a copy so Cancel can put it back
 let OBSNAP=null;
 
 // ---- Settings ----
+const MONTHS=Array.from({length:12},(_,i)=>new Date(2000,i,1).toLocaleDateString(undefined,{month:'long'}));
+// Birth month dropdown and year box; ids differ between Settings and the setup questions
+const bornBoxes=(mid,yid,act)=>{const m=/^(\d{4})-(\d\d)$/.exec(S.prof.born||''),bm=m?+m[2]:0;
+ return `<select id="${mid}" aria-label="Birth month"${act?` data-a="${act}"`:''}><option value=""${bm?'':' selected'} disabled>Month</option>${MONTHS.map((n,i)=>`<option value="${i+1}"${bm==i+1?' selected':''}>${n}</option>`).join('')}</select><input id="${yid}" type="number" inputmode="numeric" placeholder="1990" value="${m?m[1]:''}" aria-label="Birth year"${act?` data-a="${act}"`:''}>`};
+// Reads a month dropdown and year box: returns 'YYYY-MM', '' while incomplete, or null when the age falls outside 13 to 100
+function readBorn(mid,yid){const m=+($('#'+mid)?.value||0),y=Math.floor(num($('#'+yid)?.value));if(!m||!y)return '';
+ const b=y+'-'+String(m).padStart(2,'0'),a=ageOf(b),[lo,hi]=RANGE.age;return a>=lo&&a<=hi?b:null}
+// The details that rarely change: sex, birth month, height and your usual activity level
+function aboutCard(){const p=S.prof,inp=(id,k,ph)=>`<input id="${id}" type="number" inputmode="decimal" value="${esc(p[k])}" placeholder="${ph}" data-p="prof.${k}" data-t="n">`,age=profAge(p);
+ return `<section class="card"><h2>About you</h2><div class="form">
+ <div class="fr"><label>Sex</label><div class="seg">${[['f','Female'],['m','Male']].map(([v,l])=>`<button class="${p.sex==v?'on':''}" data-a="prof" data-k="sex" data-v="${v}">${l}</button>`).join('')}</div></div>
+ <div class="fr born"><label for="pbm">Born</label>${bornBoxes('pbm','pby','born')}${age?`<span class="unit">${age} years old</span>`:''}</div>
+ <div class="fr"><label for="pft">Height</label>${inp('pft','ft','5')}<span class="unit">ft</span>${inp('pin','inch','0')}<span class="unit">in</span></div>
+ <div class="fr col"><label>Usual activity</label>${actOpts(p.act,'prof')}</div>
+ <p class="mu" style="margin:0">Your usual activity is where each new day starts on Today. Leave out workouts; log those as exercise. Estimates use the Mifflin-St Jeor formula, so check with your doctor before a big change.</p>
+ <button class="btn g bd" data-a="obStart">Answer the setup questions again</button></div></section>`}
 function vMore(){return `<section class="card"><h2>Settings</h2><div class="sec">Appearance</div><div class="seg th">${[['system','Auto'],['daynight','Day/Night'],['light','Light'],['dark','Dark']].map(([v,l])=>`<button class="${S.set.theme==v?'on':''}" data-a="theme" data-v="${v}">${l}</button>`).join('')}</div>${window.Feedback?Feedback.view('th'):''}</section>
+ ${aboutCard()}
  ${window.CloudSync?CloudSync.view():''}
  <section class="card"><h2>Backup &amp; restore</h2><p class="mu" style="margin:0">Everything is saved in this browser only. Download a backup now and then to keep it safe, or to move it to another device.</p>
  <p class="mu" style="margin:8px 0 0;font-weight:700">${S.set.lastBk?'Last backup: '+longDate(iso(new Date(S.set.lastBk))):'No backup yet.'}</p>
@@ -798,7 +830,7 @@ function parseBk(txt){let j=JSON.parse(txt);if(j&&j.app&&j.data)j=j.data;
  const obj=x=>x&&typeof x=='object'&&!Array.isArray(x),str=v=>typeof v=='string'&&v.trim()?v.trim():'',entry=p=>x=>{if(!obj(x))return null;const e={id:String(x.id||uid(p)),n:String(x.n??''),cal:Math.round(num(x.cal))};
   if(str(x.br))e.br=str(x.br);if(str(x.sz))e.sz=str(x.sz);if(num(x.amt)>0)e.amt=num(x.amt);if(str(x.u))e.u=str(x.u);if(num(x.q)>0)e.q=num(x.q);if(x.per!=null&&num(x.per)>=0)e.per=num(x.per);if(str(x.fid))e.fid=str(x.fid);return e},days={};
  const food=x=>{const e=entry('f')(x);if(e&&Array.isArray(x.parts))e.parts=x.parts.filter(obj).map(q=>({fid:String(q.fid||''),n:String(q.n??''),cal:Math.round(num(q.cal)),q:num(q.q)>0?num(q.q):1}));return e};
- for(const [d,x] of Object.entries(j.days)){if(!/^\d{4}-\d\d-\d\d$/.test(d)||!obj(x))continue;const o={};MEALS.forEach(m=>o[m.k]=Array.isArray(x[m.k])?x[m.k].map(entry('i')).filter(Boolean):[]);o.x=Array.isArray(x.x)?x.x.filter(obj).map(e=>({id:String(e.id||uid('x')),n:String(e.n??''),h:num(e.h),lvl:Math.min(2,Math.max(0,Math.floor(num(e.lvl)))),w:num(e.w),cal:Math.round(num(e.cal))})):[];if(num(x.t)>0)o.t=num(x.t);days[d]=o}
+ for(const [d,x] of Object.entries(j.days)){if(!/^\d{4}-\d\d-\d\d$/.test(d)||!obj(x))continue;const o={};MEALS.forEach(m=>o[m.k]=Array.isArray(x[m.k])?x[m.k].map(entry('i')).filter(Boolean):[]);o.x=Array.isArray(x.x)?x.x.filter(obj).map(e=>({id:String(e.id||uid('x')),n:String(e.n??''),h:num(e.h),lvl:Math.min(2,Math.max(0,Math.floor(num(e.lvl)))),w:num(e.w),cal:Math.round(num(e.cal))})):[];if(num(x.t)>0)o.t=num(x.t);if(ACTV.some(a=>a[0]==num(x.act)))o.act=num(x.act);days[d]=o}
  const set=obj(j.set)?j.set:{},prof=obj(j.prof)?j.prof:{},wseen=new Set();
  const wts=(Array.isArray(j.wts)?j.wts:[]).filter(w=>obj(w)&&/^\d{4}-\d\d-\d\d$/.test(w.d)&&num(w.lbs)>0&&!wseen.has(w.d)&&wseen.add(w.d)).map(w=>({id:String(w.id||uid('w')),d:w.d,lbs:Math.round(num(w.lbs)*10)/10}));
  return {v:Math.max(0,Math.floor(num(j.v))),set:{...set,theme:['system','daynight','light','dark'].includes(set.theme)?set.theme:'system',units:Array.isArray(set.units)?set.units.filter(u=>typeof u=='string'&&u.trim()).map(u=>u.trim()):UNITS.slice()},prof:{...BLANK(),...prof,sex:prof.sex=='m'?'m':'f'},foods:j.foods.map(food).filter(Boolean),days,wts}}
@@ -857,6 +889,9 @@ const ACT={
  unitDel:d=>{const L=S.set.units||[],[u]=L.splice(+d.i,1);save();R();if(u)toast(`Removed ${u} from the list`)},
  delFood:d=>{const i=+d.i,[x]=S.foods.splice(i,1);if(!x)return;const used=isRec(x)?0:S.foods.filter(r=>isRec(r)&&r.parts.some(p=>p.fid==x.id)).length;save();R();toast(`Deleted “${x.n}”${used?` \u00b7 kept in ${used} recipe${used==1?'':'s'}`:''}`,()=>{S.foods.splice(i,0,x);save();R()},'del')},
  prof:d=>{S.prof[d.k]=d.k=='sex'?d.v:num(d.v);snapTarget();save();R()},
+ // Set the activity level for the day shown on Today; a past day's saved target is worked out again with it
+ born:(d,el)=>{const b=readBorn('pbm','pby');if(b==='')return;if(b===null){toast(RANGE.age[2]);R();return}S.prof.born=b;delete S.prof.age;snapTarget();save();R()},
+ dayAct:d=>{const x=dayEnsure(D);x.act=num(d.v);if(D<tdy()){const t=target(x.act);if(t)x.t=t.t}else snapTarget();save();R()},
  obPick:d=>{S.prof[d.k]=d.k=='sex'?d.v:num(d.v);OBE='';OB++;save();R()},
  obNext:obNext, obBack:()=>{OBE='';OB=Math.max(0,OB-1);R()},
  obStart:()=>{OBSNAP={...S.prof};OB=0;OBE='';scrollTo(0,0);R()},
@@ -953,10 +988,10 @@ const TABS=[['today','Today',vToday],['week','Week',vWeek],['add','Add',vAdd],['
 const tabCols=id=>TC[id]||TC.today;
 let RK='',LT='';
 function R(){applyTheme();if(D>tdy())D=tdy();
- if(T!==LT){if(T=='goal'){O.det=0;WFL='';WFE=0;WALL=0}LT=T}   // Your details starts collapsed each time you open Goal
+ if(T!==LT){if(T=='goal'){WFL='';WFE=0;WALL=0}LT=T}   // Goal starts fresh each time you open it
  const c=tabCols(OB>=0?'today':T);ROOT.style.setProperty('--pc',c[0]);ROOT.style.setProperty('--pc2',c[1]);
  document.body.classList.toggle('obm',OB>=0);
- if(OB>=0){const key='ob'+OB,full=key!==RK;RK=key;patch($('#app'),vOnboard(),full);if(full)setTimeout(()=>$('.obin input')?.focus(),60);navSync();return}
+ if(OB>=0){const key='ob'+OB,full=key!==RK;RK=key;patch($('#app'),vOnboard(),full);if(full)setTimeout(()=>$('.obin select,.obin input')?.focus(),60);navSync();return}
  const key=T+(T=='foods'&&RE?':re':T=='foods'&&FE?':fe':''),full=key!==RK;RK=key;patch($('#app'),(T=='more'?vMore:TABS.find(t=>t[0]==T)[2])(),full);
  $('#gear').classList.toggle('on',T=='more');
  const qi=TABS.findIndex(t=>t[0]=='add'),nb=t=>t[0]=='add'?`<button class="qab ${T=='add'?'on':''}"${T=='add'?' aria-current="page"':''} data-a="open" data-id="add" aria-label="Add food, exercise or weight"><b>+</b><span>Add</span></button>`:`<button class="tb ${T==t[0]?'on':''}"${T==t[0]?' aria-current="page"':''} style="--tc:${tabCols(t[0])[0]}" data-a="tab" data-id="${t[0]}"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[t[0]]}</svg><span>${t[1]}</span></button>`;

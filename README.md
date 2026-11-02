@@ -5,6 +5,8 @@ A simple calorie tracker that runs in your browser. It's part of the Big apps, a
 ## Features
 
 - A first-run setup that works out a daily calorie target (Mifflin-St Jeor formula, adjusted for activity level and weight-loss pace)
+- An activity picker on Today (Sitting, Some, On feet, Physical) for how much you moved that day outside workouts. Each day's target follows it, and new days start at your usual level. Workouts are logged as exercise, so they aren't counted twice.
+- Your goal weight and pace on the Goal tab. The details that rarely change (sex, birth month and year, height, usual activity) are under **Settings > About you**, and your age keeps itself up to date from your birth month.
 - Logging food for breakfast, lunch, dinner and snacks, with servings, brands and serving sizes
 - Logging food by weight: give a saved food a serving size in grams or ounces (like 100 g), then pick it on the Add tab and enter what it weighs. You can type grams or ounces either way, and the weight stays editable on Today.
 - Logging exercise, with calories burned estimated from duration and intensity
