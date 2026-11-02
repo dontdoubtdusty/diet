@@ -578,7 +578,7 @@ function exCard(){const xs=xItems(D),p=`days.${D}.x`;
  :`<div class="empty"><button class="ghost" data-a="open" data-m="x">Worked out? Tap to log it. Calories burned add to what you can eat.</button></div>`)+`</section>`}
 // How active you are on the day shown (everyday movement; workouts go in Exercise)
 function actPick(){const a=dayAct(D),cur=ACTV.find(x=>x[0]==a)||ACTV[0];
- return `<div class="hact" role="group" aria-label="Activity on this day, not counting workouts"><span>Activity</span><div>${ACTV.map(([v,sh,l])=>`<button class="${a==v?'on':''}" data-a="dayAct" data-v="${v}" aria-label="${l}"${a==v?' aria-pressed="true"':''}>${sh}</button>`).join('')}</div></div><p class="hactd">${cur[2]}: ${cur[3].charAt(0).toLowerCase()+cur[3].slice(1)}. Workouts go under Exercise.</p>`}
+ return `<div class="hact" role="group" aria-label="Activity on this day, not counting workouts"><span>Activity</span><div>${ACTV.map(([v,sh,l])=>`<button class="${a==v?'on':''}" data-a="dayAct" data-v="${v}" aria-label="${l}"${a==v?' aria-pressed="true"':''}>${sh}</button>`).join('')}</div></div><p class="hactd">${cur[2]}: ${cur[3].charAt(0).toLowerCase()+cur[3].slice(1)}.</p>`}
 function hello(){const h=new Date().getHours(),g=h<5?'Up late':h<12?'Good morning':h<17?'Good afternoon':'Good evening',T0=tdy(),tt=dayTarget(T0),left=tt?tt+burned(T0)-foodTot(T0):0;
  return `<div class="hello"><b>${g}</b><span>${tt?(left>=0?fmt(left)+' cal left today':fmt(-left)+' cal over today'):'No target yet'}</span></div>`}
 function vToday(){const food=foodTot(D),bn=burned(D),tt=dayTarget(D),budget=tt?tt+bn:0,left=budget-food,st=(l,v)=>`<div class="st"><span>${l}</span><b>${v}</b></div>`;
