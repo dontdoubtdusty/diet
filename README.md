@@ -11,7 +11,7 @@ A simple calorie tracker that runs in your browser. It's part of the Big apps, a
 - Logging food by weight: give a saved food a serving size in grams or ounces (like 100 g), then pick it on the Add tab and enter what it weighs. You can type grams or ounces either way, and the weight stays editable on Today.
 - Logging exercise, with calories burned estimated from duration and intensity
 - Weight tracking on the Goal tab: log weigh-ins (or add one from the Add tab), see a trend chart against your goal, and edit your history. Your latest weigh-in becomes your current weight, so your daily target stays up to date.
-- Saved foods and recipes, so you can log something with one tap
+- Saved foods and recipes, so you can log something with one tap. On My foods you can search, sort (newest, A–Z, most used), filter, and clean up foods you haven't logged in 90+ days
 - A 7-day chart showing how each day compared with your target
 - Light, dark and automatic themes, plus a Day/Night option that switches to dark at 6pm and back to light at 6am
 - Light haptic ticks when you save, delete, finish or toggle something, and buttons that visibly press in on every tap. Turn haptics off under **Settings > Haptics**.

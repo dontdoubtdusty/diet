@@ -21,11 +21,11 @@
 /* Layout: one phone column (meal cards side by side on wide screens), sticky header, fixed bottom nav with a center Add button.
    Color: each tab has its own accent (--pc/--pc2, set in R()); meals keep their citrus colors (lemon, lime, tangerine, grapefruit). */
 :root{color-scheme:light;--bg:#fffbea;--card:#ffffff;--fld:#fff3cc;--tx:#2b2410;--mu:#7a7052;--bd:#f0e2b2;
- --lemon:#f2b705;--lime:#5aa82a;--tang:#ff7a1a;--ex:#1b9fc2;--grape:#ec3f57;--ac:#3f8f1c;--neg:#d92f48;--wn:#e08600;--wt:#1b9a8a;
+ --lemon:#f2b705;--lime:#5aa82a;--tang:#ff7a1a;--ex:#1b9fc2;--grape:#ec3f57;--ac:#3f8f1c;--neg:#d92f48;--wt:#1b9a8a;
  --pc:#ff8a1f;--pc2:#ec3f57;--brand:#ffc220;--gl:10%;--tst:#2b2410;--fast:.16s;
  --sh:0 1px 2px rgba(90,60,0,.06),0 10px 24px -14px rgba(130,80,0,.30);
  --fd:'Fredoka','Nunito',system-ui,sans-serif;--bounce:cubic-bezier(.34,1.56,.64,1)}
-:root[data-theme="dark"]{color-scheme:dark;--ex:#4cc7e6;--bg:#15130a;--card:#211e11;--fld:#2d2916;--tx:#fbf4dc;--mu:#b5a983;--bd:#3a341d;--lemon:#ffd23f;--lime:#8ad457;--tang:#ff9b4a;--grape:#ff6b7c;--ac:#8ad457;--neg:#ff6b7c;--wn:#ffb547;--wt:#3fc4b2;--sh:0 10px 24px -16px rgba(0,0,0,.75);--gl:20%;--tst:#3a341d}
+:root[data-theme="dark"]{color-scheme:dark;--ex:#4cc7e6;--bg:#15130a;--card:#211e11;--fld:#2d2916;--tx:#fbf4dc;--mu:#b5a983;--bd:#3a341d;--lemon:#ffd23f;--lime:#8ad457;--tang:#ff9b4a;--grape:#ff6b7c;--ac:#8ad457;--neg:#ff6b7c;--wt:#3fc4b2;--sh:0 10px 24px -16px rgba(0,0,0,.75);--gl:20%;--tst:#3a341d}
 :root[data-theme="dark"] .card{box-shadow:inset 0 1px 0 rgba(255,255,255,.05),var(--sh)}:root[data-theme="dark"] .tiles2>div{background:color-mix(in srgb,var(--pc) 14%,var(--card))}
 
 *{box-sizing:border-box}
@@ -205,6 +205,9 @@ textarea.nm{flex:1 1 auto;height:auto;min-height:0;margin:0;resize:none;overflow
 
 /* Foods */
 .flist .row+.row{border-top:1px solid var(--bd)}
+.fchs{display:flex;flex-wrap:wrap;gap:6px;margin:0 2px 12px}.fch{padding:6px 12px;border-radius:999px;background:var(--fld);color:var(--tx);font-weight:700;font-size:13px}.fch.on{background:var(--ac);color:#fff}
+.ftl{display:flex;gap:8px;align-items:center}.ftl select{width:auto;flex:none}
+.clr{display:flex;align-items:center;gap:12px;padding:8px 4px;cursor:pointer}.clr .fn{flex:1;min-width:0;font-weight:700;line-height:1.3;overflow-wrap:anywhere}.clr .fc{font-weight:800;white-space:nowrap}
 
 /* Recipes */
 .rtag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:1px 7px;border-radius:999px;background:color-mix(in srgb,var(--grape) 18%,transparent);color:var(--neg);margin-right:5px;vertical-align:1px}
@@ -469,7 +472,6 @@ const foodTot=d=>sum(MEALS,m=>mealTot(d,m.k));
 const xItems=d=>(S.days[d]&&S.days[d].x)||[];
 const burned=d=>sum(xItems(d),x=>num(x.cal));
 // Net calories: food eaten minus exercise burned
-const dayTot=d=>foodTot(d)-burned(d);
 // Calories burned = MET \u00d7 body weight (kg) \u00d7 hours. Uses 150 lb until a weight is set.
 const xWeight=()=>num(S.prof.lbs)||150;
 const burn=(h,lvl,lbs)=>Math.round(LEVELS[lvl][0]*num(lbs)*.45359237*num(h));
@@ -607,11 +609,40 @@ function vWeek(){const T0=tdy(),ds=Array.from({length:7},(_,i)=>addDays(T0,i-6))
  <section class="card"><div class="sec">Days</div>${rows.slice().reverse().map(r=>`<button class="dayrow" data-a="goDay" data-d="${r.d}"><span><b>${dayLabel(r.d)}</b><span class="mu">${fmtDay(r.d)}</span></span><span class="dr">${r.food||r.bn?`<b>${fmt(r.tot)} cal</b>${r.bn?`<span class="mu" style="font-size:12px">${fmt(r.food)} eaten \u2212 ${fmt(r.bn)} exercise</span>`:''}${r.t?chip(r):''}`:'<span class="chip">Nothing logged</span>'}</span></button>`).join('')}</section>`}
 
 // ---- Foods ----
+let FQ='',FSO='new',FF='all',FSHOW=25,FBAN=0,FCL=0,FSEL=new Set();   // My foods: search text, sort, clean-up mode, ticked ids
+const STALE=90,PAGE=25,FF_LIST=[['all','All'],['rec','Recipes'],['food','Foods'],['stale','Unused '+STALE+'+ days']];   // days without logging before a food counts as unused
+// How often and how recently each saved food or recipe was logged (matched by link, else by name and brand)
+function foodUse(){const by={},ids=new Set(),key={};S.foods.forEach(f=>{if(f){ids.add(f.id);key[fkey(f.n,f.br)]=f.id}});
+ Object.keys(S.days).forEach(d=>MEALS.forEach(m=>items(d,m.k).forEach(x=>{const id=(x.fid&&ids.has(x.fid)&&x.fid)||key[fkey(baseFood(x).n,x.br)];if(!id)return;const u=by[id]||(by[id]={n:0,last:''});u.n++;if(d>u.last)u.last=d})));return by}
+const useTxt=u=>u.n?`Logged ${u.n}\u00d7 \u00b7 last ${fmtDay(u.last)}`:'Never logged';
+// Saved foods (not recipes) that are ingredients of a recipe, so clean-up never picks them on its own
+const inRecipe=()=>{const s=new Set();S.foods.forEach(f=>{if(f&&isRec(f))f.parts.forEach(p=>{if(p.fid)s.add(p.fid)})});return s};
+function foodRows(){const use=foodUse(),q=FQ.trim().toLowerCase(),chev=CHR.replace(/24/g,'18');
+ const cut=addDays(tdy(),-STALE),keep=inRecipe(),stale=x=>!x.u.last||x.u.last<cut,every=S.foods.map((f,i)=>({f,i,u:use[f&&f.id]||{n:0,last:''}})).filter(x=>x.f),
+ nStale=every.filter(x=>stale(x)&&(isRec(x.f)||!keep.has(x.f.id))).length;
+ const all=every.filter(x=>(!q||((x.f.n||'')+' '+(x.f.br||'')).toLowerCase().includes(q))&&(FF=='all'||(FF=='rec'?isRec(x.f):FF=='food'?!isRec(x.f):stale(x))));
+ if(FSO=='az')all.sort((a,b)=>(a.f.n||'').localeCompare(b.f.n||'',undefined,{sensitivity:'base'}));
+ else if(FSO=='used')all.sort((a,b)=>b.u.n-a.u.n||b.u.last.localeCompare(a.u.last));
+ return {all,chev,nStale}}
+// morph never un-ticks a checkbox, so set the ticks from FSEL after every redraw
+function paintFL(){const el=$('#fl');if(!el)return;patch(el,foodList());el.querySelectorAll('input[data-a=clSel]').forEach(i=>{i.checked=FSEL.has(i.dataset.id)})}
+function foodList(){
+ if(!S.foods.some(f=>f&&!isRec(f))&&!S.foods.length)return '<section class="card flist"><p class="mu" style="margin:0">No saved foods yet. Tap + New food, or tick \u201cSave to My foods\u201d when you log something.</p></section>';
+ const {all:full,chev,nStale}=foodRows(),all=FQ.trim()?full:full.slice(0,FSHOW),left=full.length-all.length,recs=all.filter(x=>isRec(x.f)),plain=all.filter(x=>!isRec(x.f)),showU=FCL||FSO=='used',
+ row=x=>{const f=x.f,rec=isRec(f),sub=rec?`<small class="rsub"><span class="rtag">Recipe</span>${esc(partsTxt(f))}</small>`:subLine(f),use=showU?`<small class="rsub">${useTxt(x.u)}</small>`:'';
+  if(FCL)return `<label class="row clr"><input type="checkbox" data-a="clSel" data-id="${esc(f.id)}"${FSEL.has(f.id)?' checked':''} aria-label="Select ${esc(f.n)}"><span class="fn">${esc(f.n)}${sub}${use}</span><span class="fc">${fmt(f.cal)}</span></label>`;
+  return `<div class="row"><button class="rbtn" data-a="${rec?'editRecipe':'editFood'}" data-i="${x.i}"><span class="fn">${esc(f.n)}${sub}${use}</span><span class="fc">${fmt(f.cal)}</span><span class="chev">${chev}</span></button><button class="x" data-a="delFood" data-i="${x.i}" aria-label="Delete ${esc(f.n)}">${ICX}</button></div>`},
+ bar=FCL?`<section class="card"><div class="sec">Clean up</div><p class="mu" style="margin:0 2px 10px">${FSEL.size?`${FSEL.size} selected`:'Tick the foods to delete.'} Logged entries and recipes keep their calories.</p><div class="btns" style="margin-top:0"><button class="btn g bd" data-a="clStale">Select unused ${STALE}+ days</button><button class="btn g bd" data-a="clNone"${FSEL.size?'':' disabled'}>Clear</button><button class="btn g bd" data-a="clDel" style="color:var(--neg)"${FSEL.size?'':' disabled'}>Delete${FSEL.size?' ('+FSEL.size+')':''}</button></div></section>`:'';
+ const ban=!FCL&&!FBAN&&nStale>=5?`<section class="card"><p class="mu" style="margin:0 2px 10px"><b>${nStale}</b> saved foods and recipes haven’t been logged in ${STALE}+ days.</p><div class="btns" style="margin-top:0"><button class="btn" data-a="fReview">Review</button><button class="btn g bd" data-a="fBan">Not now</button></div></section>`:'',
+ chips=`<div class="fchs">${FF_LIST.map(([k,n])=>`<button class="fch${FF==k?' on':''}" data-a="fFilt" data-f="${k}">${n}</button>`).join('')}</div>`;
+ if(!all.length)return ban+chips+bar+`<section class="card flist"><p class="mu" style="margin:0">No saved foods match.</p></section>`;
+ return ban+chips+bar+(recs.length?`<section class="card flist"><div class="sec">Recipes</div>${recs.map(row).join('')}</section>`:'')
+  +(plain.length?`<section class="card flist">${recs.length?'<div class="sec">Foods</div>':''}${plain.map(row).join('')}</section>`:'')
+  +(left>0?`<button class="btn g bd" data-a="fMore" style="width:100%">Show ${Math.min(PAGE,left)} more (${left} left)</button>`:'')}
 function vFoods(){if(RE)return vRecipe();if(FE)return vFood();
- const all=S.foods.map((f,i)=>({f,i})),recs=all.filter(x=>isRec(x.f)),plain=all.filter(x=>!isRec(x.f)),chev=CHR.replace(/24/g,'18');
  return `<h2 class="ph">My foods</h2><section class="card"><div class="btns" style="margin-top:0"><button class="btn" data-a="newFood">+ New food</button><button class="btn g bd" data-a="newRecipe">+ New recipe</button></div><p class="mu" style="margin:10px 2px 0">Saved foods and recipes show first when you tap +, so logging them takes one tap. A recipe adds up foods you've saved, like bread and peanut butter for a PB sandwich.</p></section>
- ${recs.length?`<section class="card flist"><div class="sec">Recipes</div>${recs.map(({f,i})=>`<div class="row"><button class="rbtn" data-a="editRecipe" data-i="${i}"><span class="fn">${esc(f.n)}<small class="rsub"><span class="rtag">Recipe</span>${esc(partsTxt(f))}</small></span><span class="fc">${fmt(f.cal)}</span><span class="chev">${chev}</span></button><button class="x" data-a="delFood" data-i="${i}" aria-label="Delete ${esc(f.n)}">${ICX}</button></div>`).join('')}</section>`:''}
- <section class="card flist">${recs.length?'<div class="sec">Foods</div>':''}${plain.length?plain.map(({f,i})=>`<div class="row"><button class="rbtn" data-a="editFood" data-i="${i}"><span class="fn">${esc(f.n)}${subLine(f)}</span><span class="fc">${fmt(f.cal)}</span><span class="chev">${chev}</span></button><button class="x" data-a="delFood" data-i="${i}" aria-label="Delete ${esc(f.n)}">${ICX}</button></div>`).join(''):'<p class="mu" style="margin:0">No saved foods yet. Tap + New food, or tick “Save to My foods” when you log something.</p>'}</section>`}
+ <section class="card"><div class="ftl"><input id="fsq" type="text" inputmode="search" placeholder="Search My foods" autocomplete="off" value="${esc(FQ)}" aria-label="Search My foods"><select id="fso" data-a="fSort" aria-label="Sort My foods"><option value="new"${FSO=='new'?' selected':''}>Newest</option><option value="az"${FSO=='az'?' selected':''}>A\u2013Z</option><option value="used"${FSO=='used'?' selected':''}>Most used</option></select></div><div class="btns"><button class="btn g bd" data-a="fClean">${FCL?'Done cleaning up':'Clean up'}</button></div></section>
+ <div id="fl">${foodList()}</div>`}
 
 // ---- Food editor (shown in the My foods tab) ----
 // Brand and serving size are reminders only; calories are always per serving
@@ -885,6 +916,17 @@ const ACT={
   const isNew=!FE.id;f.n=n;f.cal=Math.round(c);if(br)f.br=br;else delete f.br;if(as!=='')f.amt=a;else delete f.amt;const u=(FE.u||'').trim();if(u)f.u=u;else delete f.u;
   if(isNew)linkMatching(f);syncRecipes();const ch=syncLogged();
   FE=null;FERR='';UE=0;save();R();scrollTo(0,0);toast(`Saved ${n}${ch?` \u00b7 updated ${ch} logged entr${ch==1?'y':'ies'}`:''}`)},
+ // My foods: search, sort and clean-up
+ fSort:(d,t)=>{FSO=['new','az','used'].includes(t.value)?t.value:'new';FSHOW=PAGE;paintFL()},
+ fFilt:d=>{FF=d.f;FSHOW=PAGE;paintFL()},
+ fMore:()=>{FSHOW+=PAGE;paintFL()},
+ fBan:()=>{FBAN=1;paintFL()},
+ fReview:()=>{FF='all';FQ='';FCL=1;FSEL.clear();FSHOW=PAGE;R();ACT.clStale();scrollTo(0,0)},
+ fClean:()=>{FCL=FCL?0:1;FSEL.clear();FSHOW=PAGE;R();paintFL()},
+ clSel:(d,t)=>{if(t.checked)FSEL.add(d.id);else FSEL.delete(d.id);paintFL()},
+ clNone:()=>{FSEL.clear();paintFL()},
+ clStale:()=>{const cut=addDays(tdy(),-STALE),keep=inRecipe();let c=0;foodRows().all.forEach(x=>{if(!x.u.last||x.u.last<cut){if(!isRec(x.f)&&keep.has(x.f.id))return;FSEL.add(x.f.id);c++}});if(!c)toast('Nothing unused for '+STALE+'+ days');paintFL()},
+ clDel:()=>{const gone=S.foods.map((f,i)=>({f,i})).filter(x=>x.f&&FSEL.has(x.f.id));if(!gone.length)return;for(let k=gone.length-1;k>=0;k--)S.foods.splice(gone[k].i,1);FSEL.clear();save();R();paintFL();toast(`Deleted ${gone.length} food${gone.length==1?'':'s'}`,()=>{gone.forEach(x=>S.foods.splice(x.i,0,x.f));save();R()},'del')},
  feDel:()=>{const i=S.foods.findIndex(x=>x.id==FE.id);FE=null;FERR='';UE=0;if(i<0){R();return}ACT.delFood({i});scrollTo(0,0)},
  unitsToggle:()=>{UE=UE?0:1;R()},
  unitAdd:()=>{const el=$('#unew'),u=el?el.value.trim():'';if(!u)return;const L=S.set.units||(S.set.units=[]);if(!L.some(x=>x.toLowerCase()==u.toLowerCase()))L.push(u);if(FE)FE.u=u;el.value='';save();R()},
@@ -955,7 +997,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b
 document.addEventListener('change',e=>{const t=e.target,d=t.dataset;
  if(t.type=='checkbox'&&t.checked&&t.isConnected){t.classList.remove('pop');void t.offsetWidth;t.classList.add('pop');setTimeout(()=>t.classList.remove('pop'),320)}
  if(t.id=='fq'){t.value=qf(Q);return}if(d.p&&d.t)up(d.p,t.type=='checkbox'?t.checked:t.value,d.t,t);else if(d.a&&ACT[d.a])ACT[d.a](d,t)});
-document.addEventListener('input',e=>{const t=e.target;if(t.id=='fn'){FN=t.value;SFL='';patch($('#sl'),sheetList())}else if(t.id=='fc')FC=t.value;else if(t.id=='fq'){const v=parseFloat(t.value);if(v>0&&v<=50){Q=v;patch($('#sl'),sheetList())}}else if(t.id=='wgw'){if(WG){WG.w=t.value;SFL='';patch($('#wgp'),wgPrev())}}else if(t.id=='xn')XN=t.value;else if(t.id=='wl'||t.id=='wa')WL=t.value;else if(t.id=='wd')WD=t.value;else if(t.id=='xh'){XH=t.value;patch($('#xp'),xPrev())}else if(t.matches('textarea.nm')){if(/\n/.test(t.value))t.value=t.value.replace(/\n+/g,' ');fit(t)}else if(t.id=='ren'){if(RE)RE.n=t.value}else if(FE&&t.id=='fen')FE.n=t.value;else if(FE&&t.id=='feb')FE.br=t.value;else if(FE&&t.id=='fec')FE.cal=t.value;else if(FE&&t.id=='fea')FE.amt=t.value;else if(FE&&t.id=='feu')FE.u=t.value;else if(t.id=='req'){RQ=t.value;patch($('#rel'),reList())}});
+document.addEventListener('input',e=>{const t=e.target;if(t.id=='fn'){FN=t.value;SFL='';patch($('#sl'),sheetList())}else if(t.id=='fc')FC=t.value;else if(t.id=='fq'){const v=parseFloat(t.value);if(v>0&&v<=50){Q=v;patch($('#sl'),sheetList())}}else if(t.id=='wgw'){if(WG){WG.w=t.value;SFL='';patch($('#wgp'),wgPrev())}}else if(t.id=='xn')XN=t.value;else if(t.id=='wl'||t.id=='wa')WL=t.value;else if(t.id=='wd')WD=t.value;else if(t.id=='xh'){XH=t.value;patch($('#xp'),xPrev())}else if(t.matches('textarea.nm')){if(/\n/.test(t.value))t.value=t.value.replace(/\n+/g,' ');fit(t)}else if(t.id=='ren'){if(RE)RE.n=t.value}else if(FE&&t.id=='fen')FE.n=t.value;else if(FE&&t.id=='feb')FE.br=t.value;else if(FE&&t.id=='fec')FE.cal=t.value;else if(FE&&t.id=='fea')FE.amt=t.value;else if(FE&&t.id=='feu')FE.u=t.value;else if(t.id=='req'){RQ=t.value;patch($('#rel'),reList())}else if(t.id=='fsq'){FQ=t.value;FSHOW=PAGE;paintFL()}});
 document.addEventListener('keydown',e=>{const id=e.target.id;if(e.key=='Enter'&&e.target.classList&&e.target.classList.contains('qin')){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&id=='wgw'){e.preventDefault();ACT.wgAdd()}else if(e.key=='Enter'&&id=='unew'){e.preventDefault();ACT.unitAdd()}else if(e.key=='Enter'&&/^fe[nbca]$/.test(id)){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&id=='ren'){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&id=='req'){e.preventDefault();const f=reMatches()[0];if(f)ACT.reAdd({id:f.id})}else if(e.key=='Enter'&&(id=='ron'||id=='roc')){e.preventDefault();ACT.reOne()}else if(e.key=='Enter'&&e.target.matches('textarea.nm')){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&(e.target.id=='xn'||e.target.id=='xh')){e.preventDefault();ACT.addX()}else if(e.key=='Enter'&&id=='wl'){e.preventDefault();ACT.wLog()}else if(e.key=='Enter'&&id=='wa'){e.preventDefault();ACT.wAdd()}else if(e.key=='Enter'&&e.target.dataset&&e.target.dataset.a=='wEdit'){e.preventDefault();e.target.blur()}else if(e.key=='Enter'&&(e.target.id=='fn'||e.target.id=='fc')){e.preventDefault();ACT.addF()}else if(e.key=='Enter'&&e.target.closest('.obin')){e.preventDefault();obNext()}});
 document.addEventListener('toggle',e=>{const k=e.target.dataset&&e.target.dataset.o;if(k!=null)O[k]=e.target.open},true);
 
@@ -1026,7 +1068,7 @@ addEventListener('popstate',e=>{if(HPOP){HPOP=0;navSync();return}
  const to=Math.max(0,(e.state&&e.state.nav)||0);if(to>HD){HD=to;navSync();return}   // Forward: undo it
  let n=HD-to;HD=to;while(n-->0&&navDepth()>0)navUp();navSync()});
 ['pointerup','touchend','keydown'].forEach(t=>addEventListener(t,()=>setTimeout(navSync),true));   // catch layers opened by a long press
-function goTab(id){if(id==T){scrollTo({top:0,behavior:'smooth'});return}if(id!='foods'){RE=null;RERR='';FE=null;FERR='';UE=0}if(id!='add')WG=null;const o=TABS.map(t=>t[0]).concat('more'),dir=o.indexOf(id)>o.indexOf(T)?1:-1;T=id;R();scrollTo(0,0);slideIn(dir)}
+function goTab(id){if(id==T){scrollTo({top:0,behavior:'smooth'});return}if(id!='foods'){RE=null;RERR='';FE=null;FERR='';UE=0;FCL=0;FSEL.clear()}if(id!='add')WG=null;const o=TABS.map(t=>t[0]).concat('more'),dir=o.indexOf(id)>o.indexOf(T)?1:-1;T=id;R();scrollTo(0,0);slideIn(dir)}
 
 // ---- Nav highlight: place the pill on tab `a`, or part-way (p = 0..1) toward tab `b` while swiping ----
 function hlBox(id){const nav=$('#nav'),b=nav.querySelector(`button[data-id="${id}"]`);if(!b)return null;const n=nav.getBoundingClientRect(),br=b.getBoundingClientRect(),q=id=='add',ic=b.querySelector('.ni'),r=ic?ic.getBoundingClientRect():br;
